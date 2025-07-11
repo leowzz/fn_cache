@@ -3,6 +3,8 @@ from typing import Optional, Callable
 
 from .enums import CacheType, StorageType
 
+# 默认缓存前缀常量
+DEFAULT_PREFIX = "l_cache:"
 
 @dataclass
 class CacheConfig:
@@ -22,7 +24,7 @@ class CacheConfig:
     storage_type: StorageType = StorageType.MEMORY
     ttl_seconds: int = 600
     max_size: int = 1000
-    prefix: str = "l_cache:"
-    global_version_key: str = "l_cache:global:version"
-    user_version_key: str = "l_cache:user:version:{user_id}"
+    prefix: str = DEFAULT_PREFIX
+    global_version_key: str = f"{DEFAULT_PREFIX}global:version"
+    user_version_key: str = f"{DEFAULT_PREFIX}user:version:{{user_id}}"
     make_expire_sec_func: Optional[Callable] = None

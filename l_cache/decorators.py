@@ -7,7 +7,7 @@ from functools import wraps
 from typing import Any, Callable, Optional, Iterable, AsyncIterable, AsyncGenerator
 import threading
 
-from .config import CacheConfig
+from .config import CacheConfig, DEFAULT_PREFIX
 from .enums import CacheType, StorageType, CacheKeyEnum
 from .manager import UniversalCacheManager
 from .utils import strify
@@ -102,7 +102,7 @@ class u_l_cache:
             max_size: int = 1000,
             key_func: Optional[Callable] = None,
             key_params: Optional[list[str]] = None,
-            prefix: str = "cache:",
+            prefix: str = DEFAULT_PREFIX,
             preload_provider: Optional[Callable[[], Iterable[tuple[tuple, dict]]]] = None
     ):
         """
@@ -266,7 +266,7 @@ class l_user_cache:
             storage_type: StorageType = StorageType.REDIS,
             make_expire_sec_func: Optional[Callable] = None,
             key_params: Optional[list[str]] = None,
-            prefix: str = "l_cache:",
+            prefix: str = DEFAULT_PREFIX,
             user_id_param: str = "user_id"
     ):
         self.cache_key = cache_key
@@ -275,11 +275,11 @@ class l_user_cache:
         self.key_params = key_params if key_params is not None else None
         self.prefix = prefix
         self.user_id_param = user_id_param
-
-    @property
-    def cache_manager(self):
+        
+        # 在初始化时创建缓存管理器实例，确保同一个装饰器实例使用同一个管理器
         config = CacheConfig(storage_type=self.storage_type, prefix=self.prefix)
-        return UniversalCacheManager(config)
+        self.cache_manager = UniversalCacheManager(config)
+
 
     def __call__(self, func: Callable) -> Callable:
 
@@ -375,7 +375,7 @@ class l_user_cache:
             user_id: str,
             cache_key_enum: CacheKeyEnum,
             key_params: Optional[dict] = None,
-            prefix: str = "l_cache:",
+            prefix: str = DEFAULT_PREFIX,
             storage_type: StorageType = StorageType.REDIS
     ):
         """失效指定用户的指定缓存"""
@@ -408,7 +408,7 @@ async def invalidate_user_key_cache(
         user_id: str,
         cache_key_enum: CacheKeyEnum,
         key_params: Optional[dict] = None,
-        prefix: str = "l_cache:",
+        prefix: str = DEFAULT_PREFIX,
         storage_type: StorageType = StorageType.REDIS
 ):
     """失效指定用户的指定缓存键"""

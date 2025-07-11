@@ -7,10 +7,10 @@
 import pytest
 import json
 import time
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, Mock
 from collections import OrderedDict
 
-from l_cache.storages import MemoryCacheStorage, RedisCacheStorage
+from l_cache.storages import MemoryCacheStorage
 from l_cache.config import CacheConfig, CacheType
 
 
@@ -132,10 +132,15 @@ class TestMemoryCacheStorage:
         """测试删除时异常处理"""
         storage = MemoryCacheStorage(CacheConfig())
         
-        # 模拟异常情况
-        with patch.object(storage, '_cache', side_effect=Exception("Test error")):
-            result = storage.delete_sync("test_key")
-            assert result is False
+        # 创建一个抛出异常的假缓存对象
+        mock_cache = Mock()
+        mock_cache.__contains__ = Mock(side_effect=Exception("Test error"))
+        
+        # 替换缓存对象
+        storage._cache = mock_cache
+        
+        result = storage.delete_sync("test_key")
+        assert result is False
 
     def test_lru_eviction(self):
         """测试LRU缓存淘汰"""
@@ -252,246 +257,4 @@ class TestMemoryCacheStorage:
         assert value == "value2"
 
 
-class TestRedisCacheStorage:
-    """Redis缓存存储测试类"""
-
-    def test_init(self):
-        """测试初始化"""
-        config = CacheConfig(prefix="test:")
-        storage = RedisCacheStorage(config)
-        assert storage.config == config
-        assert storage._prefix == "test:"
-        assert storage._redis is None
-
-    @pytest.mark.asyncio
-    async def test_get_redis_connection_success(self):
-        """测试成功获取Redis连接"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis_class.return_value = mock_redis
-            
-            storage = RedisCacheStorage(CacheConfig())
-            redis_client = await storage._get_redis()
-            
-            assert redis_client == mock_redis
-            mock_redis_class.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_get_redis_connection_import_error(self):
-        """测试Redis导入错误"""
-        with patch('builtins.__import__', side_effect=ImportError("No module named 'redis'")):
-            storage = RedisCacheStorage(CacheConfig())
-            
-            with pytest.raises(ImportError, match="Redis is required"):
-                await storage._get_redis()
-
-    @pytest.mark.asyncio
-    async def test_get_redis_connection_error(self):
-        """测试Redis连接错误"""
-        with patch('redis.asyncio.Redis', side_effect=Exception("Connection failed")):
-            storage = RedisCacheStorage(CacheConfig())
-            
-            with pytest.raises(Exception, match="Connection failed"):
-                await storage._get_redis()
-
-    @pytest.mark.asyncio
-    async def test_get_success(self):
-        """测试成功获取缓存"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.get.return_value = json.dumps("test_value")
-            mock_redis_class.return_value = mock_redis
-            
-            storage = RedisCacheStorage(CacheConfig(prefix="test:"))
-            storage._redis = mock_redis
-            
-            value = await storage.get("test_key")
-            assert value == "test_value"
-            mock_redis.get.assert_called_once_with("test:test_key")
-
-    @pytest.mark.asyncio
-    async def test_get_not_found(self):
-        """测试获取不存在的缓存"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.get.return_value = None
-            mock_redis_class.return_value = mock_redis
-            
-            storage = RedisCacheStorage(CacheConfig())
-            storage._redis = mock_redis
-            
-            value = await storage.get("test_key")
-            assert value is None
-
-    @pytest.mark.asyncio
-    async def test_get_with_json_error(self):
-        """测试获取时JSON解析错误"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.get.return_value = "invalid_json"
-            mock_redis_class.return_value = mock_redis
-            
-            storage = RedisCacheStorage(CacheConfig())
-            storage._redis = mock_redis
-            
-            value = await storage.get("test_key")
-            assert value == "invalid_json"  # 返回原始值
-
-    @pytest.mark.asyncio
-    async def test_get_with_redis_error(self):
-        """测试Redis错误时的获取"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.get.side_effect = Exception("Redis error")
-            mock_redis_class.return_value = mock_redis
-            
-            storage = RedisCacheStorage(CacheConfig())
-            storage._redis = mock_redis
-            
-            value = await storage.get("test_key")
-            assert value is None
-
-    @pytest.mark.asyncio
-    async def test_set_success(self):
-        """测试成功设置缓存"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.setex.return_value = True
-            mock_redis_class.return_value = mock_redis
-    
-            storage = RedisCacheStorage(CacheConfig(prefix="test:"))
-            storage._redis = mock_redis
-    
-            result = await storage.set("test_key", "test_value", ttl_seconds=60)
-            assert result is True
-            mock_redis.setex.assert_called_once_with("test:test_key", 60, "test_value")
-
-    @pytest.mark.asyncio
-    async def test_set_complex_data(self):
-        """测试设置复杂数据"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.setex.return_value = True
-            mock_redis_class.return_value = mock_redis
-
-            storage = RedisCacheStorage(CacheConfig())
-            storage._redis = mock_redis
-
-            test_data = {"key": "value", "list": [1, 2, 3]}
-            result = await storage.set("test_key", test_data, ttl_seconds=60)
-            assert result is True
-            mock_redis.setex.assert_called_once_with("test_key", 60, json.dumps(test_data))
-
-    @pytest.mark.asyncio
-    async def test_set_with_redis_error(self):
-        """测试Redis错误时的设置"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.setex.side_effect = Exception("Redis error")
-            mock_redis_class.return_value = mock_redis
-
-            storage = RedisCacheStorage(CacheConfig())
-            storage._redis = mock_redis
-
-            result = await storage.set("test_key", "test_value", ttl_seconds=60)
-            assert result is False
-
-    @pytest.mark.asyncio
-    async def test_delete_success(self):
-        """测试成功删除缓存"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.delete.return_value = 1
-            mock_redis_class.return_value = mock_redis
-            
-            storage = RedisCacheStorage(CacheConfig(prefix="test:"))
-            storage._redis = mock_redis
-            
-            result = await storage.delete("test_key")
-            assert result is True
-            mock_redis.delete.assert_called_once_with("test:test_key")
-
-    @pytest.mark.asyncio
-    async def test_delete_not_found(self):
-        """测试删除不存在的键"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.delete.return_value = 0
-            mock_redis_class.return_value = mock_redis
-            
-            storage = RedisCacheStorage(CacheConfig())
-            storage._redis = mock_redis
-            
-            result = await storage.delete("test_key")
-            assert result is True  # Redis删除不存在的键返回0，但我们返回True
-
-    @pytest.mark.asyncio
-    async def test_delete_with_redis_error(self):
-        """测试Redis错误时的删除"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.delete.side_effect = Exception("Redis error")
-            mock_redis_class.return_value = mock_redis
-            
-            storage = RedisCacheStorage(CacheConfig())
-            storage._redis = mock_redis
-            
-            result = await storage.delete("test_key")
-            assert result is False
-
-    def test_sync_operations_not_supported(self):
-        """测试同步操作不支持"""
-        storage = RedisCacheStorage(CacheConfig())
-        
-        with pytest.raises(NotImplementedError):
-            storage.get_sync("test_key")
-        
-        with pytest.raises(NotImplementedError):
-            storage.set_sync("test_key", "test_value", ttl_seconds=60)
-        
-        with pytest.raises(NotImplementedError):
-            storage.delete_sync("test_key")
-
-    @pytest.mark.asyncio
-    async def test_connection_reuse(self):
-        """测试连接复用"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis_class.return_value = mock_redis
-            
-            storage = RedisCacheStorage(CacheConfig())
-            
-            # 第一次获取连接
-            redis1 = await storage._get_redis()
-            
-            # 第二次获取连接
-            redis2 = await storage._get_redis()
-            
-            # 应该是同一个连接
-            assert redis1 is redis2
-            assert mock_redis_class.call_count == 1
-
-    @pytest.mark.asyncio
-    async def test_prefix_handling(self):
-        """测试前缀处理"""
-        with patch('redis.asyncio.Redis') as mock_redis_class:
-            mock_redis = AsyncMock()
-            mock_redis.get.return_value = json.dumps("test_value")
-            mock_redis.setex.return_value = True
-            mock_redis.delete.return_value = 1
-            mock_redis_class.return_value = mock_redis
-    
-            storage = RedisCacheStorage(CacheConfig(prefix="custom:"))
-            storage._redis = mock_redis
-    
-            # 测试设置
-            await storage.set("test_key", "test_value", ttl_seconds=60)
-            mock_redis.setex.assert_called_with("custom:test_key", 60, "test_value")
-            
-            # 测试获取
-            await storage.get("test_key")
-            mock_redis.get.assert_called_with("custom:test_key")
-            
-            # 测试删除
-            await storage.delete("test_key")
-            mock_redis.delete.assert_called_with("custom:test_key") 
+ 

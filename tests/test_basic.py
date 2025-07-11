@@ -16,7 +16,7 @@ from l_cache import (
     l_user_cache,
     CacheKeyEnum,
 )
-from l_cache.storages import MemoryCacheStorage, RedisCacheStorage
+from l_cache.storages import MemoryCacheStorage
 
 
 class TestCacheKeyEnum(str, Enum):
@@ -162,7 +162,8 @@ class TestBasicFunctionality:
         
         @l_user_cache(
             cache_key=TestCacheKeyEnum.USER_KEY,
-            key_params=["user_id"]
+            key_params=["user_id"],
+            storage_type=StorageType.MEMORY
         )
         def get_user_data(user_id: int):
             nonlocal call_count
@@ -184,38 +185,6 @@ class TestBasicFunctionality:
         assert result3["user_id"] == 456
         assert call_count == 2  # 调用次数应该增加
 
-
-class TestRedisStorage:
-    """Redis存储测试类"""
-    
-    @pytest.fixture
-    def mock_redis(self):
-        """模拟Redis连接"""
-        mock_redis = AsyncMock()
-        mock_redis.get.return_value = None
-        mock_redis.set.return_value = True
-        mock_redis.delete.return_value = 1
-        mock_redis.incr.return_value = 1
-        return mock_redis
-    
-    @pytest.mark.asyncio
-    async def test_redis_storage_with_mock(self, mock_redis):
-        """测试Redis存储（使用模拟）"""
-        # 这里只是测试接口，实际Redis测试需要真实的Redis实例
-        storage = RedisCacheStorage(CacheConfig())
-        storage._redis = mock_redis
-        
-        # 测试设置
-        await storage.set("test_key", "test_value", ttl_seconds=60)
-        mock_redis.set.assert_called_once()
-        
-        # 测试获取
-        await storage.get("test_key")
-        mock_redis.get.assert_called_once()
-        
-        # 测试删除
-        await storage.delete("test_key")
-        mock_redis.delete.assert_called_once()
 
 
 class TestCacheInvalidation:

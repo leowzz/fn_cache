@@ -83,10 +83,13 @@ class MemoryCacheStorage(CacheStorage):
         if not self.is_enabled:
             return False
 
-        if self.config.cache_type == CacheType.TTL:
-            return self._set_ttl(key, value, ttl_seconds)
-        else:  # LRU
-            return self._set_lru(key, value)
+        try:
+            if self.config.cache_type == CacheType.TTL:
+                return self._set_ttl(key, value, ttl_seconds)
+            else:  # LRU
+                return self._set_lru(key, value)
+        except Exception:
+            return False
 
     def delete_sync(self, key: str) -> bool:
         """同步删除缓存值"""

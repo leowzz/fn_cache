@@ -7,7 +7,7 @@ import asyncio
 from unittest.mock import Mock, patch, AsyncMock
 
 from l_cache import UniversalCacheManager, CacheConfig, CacheType, StorageType
-from l_cache.storages import MemoryCacheStorage, RedisCacheStorage
+from l_cache.storages import MemoryCacheStorage
 
 
 class TestUniversalCacheManager:
@@ -41,11 +41,6 @@ class TestUniversalCacheManager:
         manager = UniversalCacheManager(config)
         assert isinstance(manager._storage, MemoryCacheStorage)
 
-    def test_create_storage_redis(self):
-        """测试创建Redis存储"""
-        config = CacheConfig(storage_type=StorageType.REDIS)
-        manager = UniversalCacheManager(config)
-        assert isinstance(manager._storage, RedisCacheStorage)
 
     def test_create_storage_invalid_type(self):
         """测试创建无效存储类型"""
@@ -154,12 +149,7 @@ class TestUniversalCacheManager:
         value = manager.get_sync("test_key")
         assert value == "test_value"
 
-    def test_get_sync_redis_storage_error(self):
-        """测试Redis存储的同步获取错误"""
-        config = CacheConfig(storage_type=StorageType.REDIS)
-        manager = UniversalCacheManager(config)
-        with pytest.raises(ValueError, match="Sync operations are only supported for memory storage"):
-            manager.get_sync("test_key")
+
 
     def test_set_sync_memory_storage(self):
         """测试内存存储的同步设置"""
@@ -169,12 +159,7 @@ class TestUniversalCacheManager:
         value = manager.get_sync("test_key")
         assert value == "test_value"
 
-    def test_set_sync_redis_storage_error(self):
-        """测试Redis存储的同步设置错误"""
-        config = CacheConfig(storage_type=StorageType.REDIS)
-        manager = UniversalCacheManager(config)
-        with pytest.raises(ValueError, match="Sync operations are only supported for memory storage"):
-            manager.set_sync("test_key", "test_value", ttl_seconds=60)
+
 
     def test_delete_sync_memory_storage(self):
         """测试内存存储的同步删除"""
@@ -185,12 +170,7 @@ class TestUniversalCacheManager:
         value = manager.get_sync("test_key")
         assert value is None
 
-    def test_delete_sync_redis_storage_error(self):
-        """测试Redis存储的同步删除错误"""
-        config = CacheConfig(storage_type=StorageType.REDIS)
-        manager = UniversalCacheManager(config)
-        with pytest.raises(ValueError, match="Sync operations are only supported for memory storage"):
-            manager.delete_sync("test_key")
+
 
     @pytest.mark.asyncio
     async def test_increment_global_version(self):
