@@ -1,0 +1,28 @@
+from dataclasses import dataclass
+from typing import Optional, Callable
+
+from .enums import CacheType, StorageType
+
+
+@dataclass
+class CacheConfig:
+    """
+    缓存配置
+    
+    :param cache_type: 缓存类型 (LRU/TTL)
+    :param storage_type: 存储类型 (REDIS/MEMORY)
+    :param ttl_seconds: TTL时间（秒）
+    :param max_size: LRU最大容量
+    :param prefix: 缓存key前缀
+    :param global_version_key: 全局版本号key名称。用于存储一个全局版本号，当缓存项的版本号小于此版本号时，缓存失效。
+    :param user_version_key: 用户版本号key名称。用于存储用户级别的版本号，支持按用户失效缓存。
+    :param make_expire_sec_func: 动态生成过期时间的函数，接收缓存值作为参数，返回过期秒数
+    """
+    cache_type: CacheType = CacheType.TTL
+    storage_type: StorageType = StorageType.MEMORY
+    ttl_seconds: int = 600
+    max_size: int = 1000
+    prefix: str = "l_cache:"
+    global_version_key: str = "l_cache:global:version"
+    user_version_key: str = "l_cache:user:version:{user_id}"
+    make_expire_sec_func: Optional[Callable] = None

@@ -1,0 +1,35 @@
+# 基础依赖
+-r requirements.txt
+
+# 测试依赖
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-xdist>=3.0.0
+pytest-benchmark>=4.0.0
+pytest-timeout>=2.1.0
+pytest-randomly>=3.15.0
+
+# 覆盖率工具
+coverage>=7.0.0
+
+# 代码质量
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.0.0
+pre-commit>=3.0.0
+
+# 文档
+sphinx>=6.0.0
+sphinx-rtd-theme>=1.2.0
+myst-parser>=1.0.0
+
+# 构建工具
+build>=0.10.0
+twine>=4.0.0
+
+# 性能测试
+memory-profiler>=0.60.0
+psutil>=5.9.0 

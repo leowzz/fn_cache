@@ -1,0 +1,82 @@
+"""
+L-Cache: 轻量级通用缓存库
+
+这是一个支持多种存储后端（内存、Redis）和缓存策略（LRU、TTL）的通用缓存库。
+提供同步和异步API，支持函数装饰器和直接调用方式。
+
+主要特性：
+- 支持内存和Redis两种存储后端
+- 支持LRU和TTL两种缓存策略
+- 提供同步和异步API
+- 支持函数装饰器
+- 支持一键失效所有缓存
+- 支持自定义缓存key生成策略
+- 支持用户级别版本控制和缓存失效
+- 支持缓存键枚举和动态过期时间
+
+基本用法:
+    
+    # 使用通用装饰器
+    @u_l_cache(ttl_seconds=300)
+    def my_function(arg1, arg2):
+        return expensive_computation(arg1, arg2)
+    
+    # 使用缓存键枚举装饰器
+    class UserCacheKeyEnum(CacheKeyEnum):
+        USER_VIP_INFO = "user:vip:info:{user_id}"
+    
+    @l_user_cache(UserCacheKeyEnum.USER_VIP_INFO, key_params=["user_id"])
+    async def get_user_vip_info(user_id: int):
+        return await fetch_vip_info(user_id)
+    
+    # 直接使用缓存管理器
+    cache_manager = UniversalCacheManager()
+    await cache_manager.set("key", "value", ttl_seconds=300)
+    value = await cache_manager.get("key")
+"""
+
+from .config import CacheConfig
+from .decorators import (
+    invalidate_all_caches,
+    invalidate_user_cache,
+    l_user_cache,
+    preload_all_caches,
+    u_l_cache,
+    invalidate_user_key_cache,
+)
+from .enums import CacheKeyEnum, CacheType, StorageType
+from .manager import UniversalCacheManager
+from .storages import CacheStorage, MemoryCacheStorage, RedisCacheStorage
+from .utils import safe_redis_operation, safe_redis_void_operation
+
+__all__ = [
+    # 管理器和存储
+    "UniversalCacheManager",
+    "CacheStorage",
+    "RedisCacheStorage",
+    "MemoryCacheStorage",
+
+    # 配置和枚举
+    "CacheConfig",
+    "CacheKeyEnum",
+    "CacheType",
+    "StorageType",
+
+    # 装饰器
+    "u_l_cache",
+    "l_user_cache",
+
+    # 工具函数
+    "invalidate_all_caches",
+    "invalidate_user_cache",
+    "invalidate_user_key_cache",
+    "preload_all_caches",
+
+    # redis操作工具
+    "safe_redis_operation",
+    "safe_redis_void_operation",
+]
+
+__version__ = "1.0.0"
+__author__ = "WangZhanze <wangzhanze@huoban.ai>"
+__description__ = "轻量级通用缓存库"

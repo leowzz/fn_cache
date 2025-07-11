@@ -1,0 +1,21 @@
+include README.md
+include LICENSE
+include pyproject.toml
+include setup.py
+recursive-include l_cache *.py
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * *.so
+recursive-exclude * .DS_Store
+recursive-exclude * .git*
+recursive-exclude * .hg*
+recursive-exclude * .svn*
+recursive-exclude * .tox*
+recursive-exclude * .venv*
+recursive-exclude * build*
+recursive-exclude * dist*
+recursive-exclude * *.egg-info*
+recursive-exclude * htmlcov*
+recursive-exclude * .coverage*
+recursive-exclude * .mypy_cache*
+recursive-exclude * .pytest_cache* 
