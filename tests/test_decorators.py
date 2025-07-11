@@ -15,7 +15,7 @@ from l_cache import (
 from l_cache.decorators import _CacheRegistry
 
 
-class TestCacheKeyEnum(str, Enum):
+class CacheKeyEnum(str, Enum):
     """测试用缓存键枚举"""
     USER_INFO = "user:info:{user_id}"
     USER_SETTINGS = "user:settings:{user_id}:{setting_type}"
@@ -261,8 +261,8 @@ class TestLUserCacheDecorator:
 
     def test_init_with_default_params(self):
         """测试使用默认参数初始化"""
-        decorator = l_user_cache(TestCacheKeyEnum.USER_INFO)
-        assert decorator.cache_key == TestCacheKeyEnum.USER_INFO
+        decorator = l_user_cache(CacheKeyEnum.USER_INFO)
+        assert decorator.cache_key == CacheKeyEnum.USER_INFO
         assert decorator.storage_type == StorageType.REDIS
         assert decorator.key_params is None
         assert decorator.prefix == "l_cache:"
@@ -274,7 +274,7 @@ class TestLUserCacheDecorator:
             return 300 if user_id == "vip" else 60
         
         decorator = l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_SETTINGS,
+            cache_key=CacheKeyEnum.USER_SETTINGS,
             storage_type=StorageType.MEMORY,
             make_expire_sec_func=make_expire_sec_func,
             key_params=["user_id", "setting_type"],
@@ -282,7 +282,7 @@ class TestLUserCacheDecorator:
             user_id_param="uid"
         )
         
-        assert decorator.cache_key == TestCacheKeyEnum.USER_SETTINGS
+        assert decorator.cache_key == CacheKeyEnum.USER_SETTINGS
         assert decorator.storage_type == StorageType.MEMORY
         assert decorator.make_expire_sec_func == make_expire_sec_func
         assert decorator.key_params == ["user_id", "setting_type"]
@@ -294,7 +294,7 @@ class TestLUserCacheDecorator:
         call_count = 0
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_INFO,
+            cache_key=CacheKeyEnum.USER_INFO,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -325,7 +325,7 @@ class TestLUserCacheDecorator:
         call_count = 0
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_INFO,
+            cache_key=CacheKeyEnum.USER_INFO,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -350,7 +350,7 @@ class TestLUserCacheDecorator:
         call_count = 0
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_SETTINGS,
+            cache_key=CacheKeyEnum.USER_SETTINGS,
             key_params=["user_id", "setting_type"],
             storage_type=StorageType.MEMORY
         )
@@ -382,7 +382,7 @@ class TestLUserCacheDecorator:
             return 300 if user_id == "vip" else 60
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_INFO,
+            cache_key=CacheKeyEnum.USER_INFO,
             key_params=["user_id"],
             make_expire_sec_func=make_expire_sec_func,
             storage_type=StorageType.MEMORY
@@ -405,7 +405,7 @@ class TestLUserCacheDecorator:
     def test_cache_key_building(self):
         """测试缓存键构建"""
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_INFO,
+            cache_key=CacheKeyEnum.USER_INFO,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -423,7 +423,7 @@ class TestLUserCacheDecorator:
         call_count = 0
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_INFO,
+            cache_key=CacheKeyEnum.USER_INFO,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -627,7 +627,7 @@ class TestGlobalFunctions:
             
             await l_user_cache.invalidate_cache(
                 user_id="user123",
-                cache_key_enum=TestCacheKeyEnum.USER_INFO,
+                cache_key_enum=CacheKeyEnum.USER_INFO,
                 key_params={"user_id": 123}
             )
             
@@ -647,5 +647,5 @@ class TestGlobalFunctions:
             with pytest.raises(KeyError):
                 await l_user_cache.invalidate_cache(
                     user_id="user123",
-                    cache_key_enum=TestCacheKeyEnum.USER_INFO
+                    cache_key_enum=CacheKeyEnum.USER_INFO
                 ) 

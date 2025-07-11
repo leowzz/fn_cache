@@ -19,7 +19,7 @@ from l_cache import (
 from l_cache.storages import MemoryCacheStorage
 
 
-class TestCacheKeyEnum(str, Enum):
+class CacheKeyEnum(str, Enum):
     """测试用缓存键枚举"""
     TEST_KEY = "test:key:{param}"
     USER_KEY = "user:data:{user_id}"
@@ -50,10 +50,10 @@ class TestBasicFunctionality:
     
     def test_cache_key_enum(self):
         """测试缓存键枚举"""
-        key = TestCacheKeyEnum.TEST_KEY.format(param="value")
+        key = CacheKeyEnum.TEST_KEY.format(param="value")
         assert key == "test:key:value"
         
-        user_key = TestCacheKeyEnum.USER_KEY.format(user_id=123)
+        user_key = CacheKeyEnum.USER_KEY.format(user_id=123)
         assert user_key == "user:data:123"
     
     def test_memory_storage(self):
@@ -161,7 +161,7 @@ class TestBasicFunctionality:
         call_count = 0
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_KEY,
+            cache_key=CacheKeyEnum.USER_KEY,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )

@@ -15,7 +15,7 @@ from l_cache import (
 )
 
 
-class TestCacheKeyEnum(str, Enum):
+class CacheKeyEnum(str, Enum):
     """测试用缓存键枚举"""
     USER_PROFILE = "user:profile:{user_id}"
     USER_PREFERENCES = "user:preferences:{user_id}"
@@ -187,7 +187,7 @@ class TestDecoratorIntegration:
         call_count = 0
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_PROFILE,
+            cache_key=CacheKeyEnum.USER_PROFILE,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -218,7 +218,7 @@ class TestDecoratorIntegration:
         call_count = 0
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_PREFERENCES,
+            cache_key=CacheKeyEnum.USER_PREFERENCES,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -345,7 +345,7 @@ class TestConcurrentOperations:
         call_count = 0
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_PROFILE,
+            cache_key=CacheKeyEnum.USER_PROFILE,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -553,7 +553,7 @@ class TestRealWorldScenarios:
         call_count = 0
         
         @l_user_cache(
-            cache_key=TestCacheKeyEnum.USER_PROFILE,
+            cache_key=CacheKeyEnum.USER_PROFILE,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
