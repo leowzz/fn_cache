@@ -51,7 +51,7 @@ L-Cache: 轻量级通用缓存库
     stats = get_cache_statistics()  # 获取缓存统计信息
 """
 
-from .config import CacheConfig
+from .config import CacheConfig, enable_global_cache, disable_global_cache, is_global_cache_enabled
 from .decorators import (
     invalidate_all_caches,
     u_l_cache,
@@ -84,6 +84,9 @@ __all__ = [
 
     # 配置和枚举
     "CacheConfig",
+    "enable_global_cache",
+    "disable_global_cache",
+    "is_global_cache_enabled",
     "CacheKeyEnum",
     "CacheType",
     "StorageType",

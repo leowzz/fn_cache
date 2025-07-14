@@ -220,7 +220,64 @@ class TestULCacheDecorator:
         # 应该只调用一次函数
         assert call_count == 1
 
+    @pytest.mark.asyncio
+    async def test_sync_cache_clear(self):
+        """测试同步函数缓存清除功能"""
+        call_count = 0
 
+        @u_l_cache(ttl_seconds=60)
+        def test_function(param):
+            nonlocal call_count
+            call_count += 1
+            return f"result_{param}"
+
+        # 第一次调用，缓存未命中
+        result1 = test_function("a")
+        assert result1 == "result_a"
+        assert call_count == 1
+
+        # 第二次调用，缓存命中
+        result2 = test_function("a")
+        assert result2 == "result_a"
+        assert call_count == 1
+
+        # 清除缓存（异步）
+        await test_function.cache.clear()
+
+        # 第三次调用，缓存应失效
+        result3 = test_function("a")
+        assert result3 == "result_a"
+        assert call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_async_cache_clear(self):
+        """测试异步函数缓存清除功能"""
+        call_count = 0
+
+        @u_l_cache(ttl_seconds=60)
+        async def test_async_function(param):
+            nonlocal call_count
+            call_count += 1
+            await asyncio.sleep(0.01)
+            return f"async_result_{param}"
+
+        # 第一次调用，缓存未命中
+        result1 = await test_async_function("b")
+        assert result1 == "async_result_b"
+        assert call_count == 1
+
+        # 第二次调用，缓存命中
+        result2 = await test_async_function("b")
+        assert result2 == "async_result_b"
+        assert call_count == 1
+
+        # 清除缓存
+        await test_async_function.cache.clear()
+
+        # 第三次调用，缓存应失效
+        result3 = await test_async_function("b")
+        assert result3 == "async_result_b"
+        assert call_count == 2
 
 
 

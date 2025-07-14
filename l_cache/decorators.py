@@ -583,6 +583,7 @@ class u_l_cache:
         # 检查全局缓存开关
         if not self.cache_manager.is_cache_enabled:
             # 全局缓存已禁用，直接执行原函数
+            logger.info(f"Global cache disabled, skipping cache for {func.__name__}")
             return await func(*args, **kwargs)
             
         start_time = time.perf_counter()
