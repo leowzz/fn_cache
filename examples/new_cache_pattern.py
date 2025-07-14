@@ -12,7 +12,6 @@ import asyncio
 import time
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from l_cache import u_l_cache
 

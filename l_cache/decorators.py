@@ -435,7 +435,25 @@ class u_l_cache:
         self.key_func = key_func
         self.preload_provider = preload_provider
         self.make_expire_sec_func = make_expire_sec_func
-        self.cache_manager = UniversalCacheManager(self.config)
+        
+        # 检查是否使用默认配置，如果是则使用全局单例管理器
+        is_default_config = (
+            cache_type == CacheType.TTL and
+            storage_type == StorageType.MEMORY and
+            ttl_seconds == 60 * 10 and
+            max_size == 1000 and
+            prefix == DEFAULT_PREFIX and
+            serializer_type is None and
+            serializer_kwargs is None
+        )
+        
+        if is_default_config:
+            # 使用全局单例管理器
+            self.cache_manager = _get_default_cache_manager()
+        else:
+            # 使用自定义配置创建新的管理器
+            self.cache_manager = UniversalCacheManager(self.config)
+            
         self._locks = {}  # key: threading.Lock or asyncio.Lock
         self._locks_lock = threading.Lock()
 
@@ -562,6 +580,11 @@ class u_l_cache:
         :param kwargs: 关键字参数
         :return: 函数执行结果
         """
+        # 检查全局缓存开关
+        if not self.cache_manager.is_cache_enabled:
+            # 全局缓存已禁用，直接执行原函数
+            return await func(*args, **kwargs)
+            
         start_time = time.perf_counter()
         cache_key = self._build_cache_key(func, args, kwargs)
         lock = self._get_lock(cache_key, is_async=True)
@@ -648,6 +671,11 @@ class u_l_cache:
         :param kwargs: 关键字参数
         :return: 函数执行结果
         """
+        # 检查全局缓存开关
+        if not self.cache_manager.is_cache_enabled:
+            # 全局缓存已禁用，直接执行原函数
+            return func(*args, **kwargs)
+            
         start_time = time.perf_counter()
         cache_key = self._build_cache_key(func, args, kwargs)
         lock = self._get_lock(cache_key, is_async=False)
@@ -809,9 +837,91 @@ def get_cache_statistics(cache_id: Optional[str] = None) -> Dict[str, Any]:
 
 
 def reset_cache_statistics(cache_id: Optional[str] = None):
-    """
-    重置缓存统计信息
-
-    :param cache_id: 可选的缓存ID，如果不提供则重置所有缓存的统计信息
-    """
+    """重置缓存统计信息"""
     _reset_cache_statistics(cache_id)
+
+
+# 全局缓存控制函数
+# 使用单例模式管理默认缓存管理器
+_default_cache_manager = None
+
+def _get_default_cache_manager() -> UniversalCacheManager:
+    """获取默认缓存管理器单例"""
+    global _default_cache_manager
+    if _default_cache_manager is None:
+        _default_cache_manager = UniversalCacheManager()
+    return _default_cache_manager
+
+def enable_global_cache():
+    """
+    启用全局缓存功能
+    
+    启用后，所有使用默认配置的缓存管理器将正常工作。
+    注意：此函数只影响使用默认配置的缓存管理器，自定义配置的缓存管理器需要单独控制。
+    """
+    from .config import enable_global_cache as _enable_global_cache
+    _enable_global_cache()
+    logger.info("Global cache enabled for default manager")
+
+
+def disable_global_cache():
+    """
+    禁用全局缓存功能
+    
+    禁用后，所有使用默认配置的缓存管理器将被忽略：
+    - get操作返回None
+    - set操作返回False
+    - delete操作返回False
+    - 装饰器直接执行原函数，跳过缓存逻辑
+    
+    注意：此函数只影响使用默认配置的缓存管理器，自定义配置的缓存管理器需要单独控制。
+    """
+    from .config import disable_global_cache as _disable_global_cache
+    _disable_global_cache()
+    logger.info("Global cache disabled for default manager")
+
+
+def is_global_cache_enabled() -> bool:
+    """
+    检查全局缓存是否已启用
+    
+    :return: 是否启用
+    """
+    from .config import is_global_cache_enabled as _is_global_cache_enabled
+    return _is_global_cache_enabled()
+
+
+def enable_all_registered_caches():
+    """
+    启用所有已注册的缓存管理器
+    
+    此函数会遍历所有已注册到监控系统的缓存管理器，并启用它们的缓存功能。
+    """
+    from .config import enable_global_cache as _enable_global_cache
+    _enable_global_cache()
+    logger.info(f"Enabled all registered cache managers ({len(cache_registry._registered_managers)} managers)")
+
+
+def disable_all_registered_caches():
+    """
+    禁用所有已注册的缓存管理器
+    
+    此函数会遍历所有已注册到监控系统的缓存管理器，并禁用它们的缓存功能。
+    """
+    from .config import disable_global_cache as _disable_global_cache
+    _disable_global_cache()
+    logger.info(f"Disabled all registered cache managers ({len(cache_registry._registered_managers)} managers)")
+
+
+def get_all_cache_status() -> Dict[str, bool]:
+    """
+    获取所有已注册缓存管理器的状态
+    
+    :return: 管理器ID到启用状态的映射
+    """
+    from .config import is_global_cache_enabled as _is_global_cache_enabled
+    status = {}
+    global_status = _is_global_cache_enabled()
+    for manager_id, manager in cache_registry._registered_managers.items():
+        status[manager_id] = global_status
+    return status

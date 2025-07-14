@@ -8,7 +8,7 @@ import asyncio
 import time
 from typing import Dict, List, Any
 
-from .. import (
+from l_cache import (
     u_l_cache,
     CacheKeyEnum,
     CacheType,
@@ -17,7 +17,6 @@ from .. import (
     CacheConfig,
     preload_all_caches,
     invalidate_all_caches,
-    invalidate_user_cache,
 )
 
 
@@ -82,7 +81,7 @@ def calculate_fibonacci(n: int) -> int:
     """计算斐波那契数列（LRU缓存示例）"""
     if n <= 1:
         return n
-    return calculate_fibonacci(n-1) + calculate_fibonacci(n-2)
+    return calculate_fibonacci(n - 1) + calculate_fibonacci(n - 2)
 
 
 # 示例5: 自定义缓存键生成
@@ -170,34 +169,34 @@ def get_user_name_preload(user_id: int) -> str:
 # 示例10: 直接使用缓存管理器
 class UserCacheService:
     """用户缓存服务示例"""
-    
+
     def __init__(self):
         config = CacheConfig(
             storage_type=StorageType.REDIS,
             prefix="user_cache:"
         )
         self.cache = UniversalCacheManager(config)
-    
+
     async def get_user_data(self, user_id: int) -> Dict[str, Any]:
         """获取用户数据"""
         cache_key = f"user_data:{user_id}"
-        
+
         # 使用用户级别版本控制
         cached_data = await self.cache.get(cache_key, user_id=str(user_id))
         if cached_data:
             return cached_data
-        
+
         # 缓存未命中，获取数据
         user_data = await self._fetch_user_data(user_id)
-        
+
         # 存储到缓存，使用用户级别版本控制
         await self.cache.set(cache_key, user_data, user_id=str(user_id))
         return user_data
-    
+
     async def invalidate_user_cache(self, user_id: int):
         """使用户的所有缓存失效"""
         await self.cache.invalidate_user_cache(str(user_id))
-    
+
     async def _fetch_user_data(self, user_id: int) -> Dict[str, Any]:
         """模拟从数据库获取用户数据"""
         await asyncio.sleep(0.5)
@@ -212,13 +211,13 @@ class UserCacheService:
 async def run_examples():
     """运行所有示例"""
     print("=== L-Cache 使用示例 ===\n")
-    
+
     # 示例1: 基本内存TTL缓存
     print("1. 基本内存TTL缓存:")
     print(get_user_name(123))  # 第一次调用，会执行函数
     print(get_user_name(123))  # 第二次调用，从缓存返回
     print()
-    
+
     # 示例2: 异步函数缓存
     print("2. 异步函数缓存:")
     result1 = await fetch_user_data(456)
@@ -226,7 +225,7 @@ async def run_examples():
     result2 = await fetch_user_data(456)
     print(f"第二次调用: {result2}")
     print()
-    
+
     # 示例3: Redis存储（需要Redis服务）
     print("3. Redis存储缓存:")
     try:
@@ -237,13 +236,13 @@ async def run_examples():
     except Exception as e:
         print(f"Redis连接失败: {e}")
     print()
-    
+
     # 示例4: LRU缓存
     print("4. LRU缓存:")
     print(f"斐波那契(10): {calculate_fibonacci(10)}")
     print(f"斐波那契(10): {calculate_fibonacci(10)}")  # 从缓存返回
     print()
-    
+
     # 示例5: 自定义缓存键
     print("5. 自定义缓存键:")
     perms1 = get_user_permissions(789, "tenant_a")
@@ -251,7 +250,7 @@ async def run_examples():
     perms2 = get_user_permissions(789, "tenant_a")
     print(f"权限2: {perms2}")
     print()
-    
+
     # 示例6: 自动键生成
     print("6. 自动键生成:")
     doc1 = get_document(1, 123, "tenant_b")
@@ -259,7 +258,7 @@ async def run_examples():
     doc2 = get_document(1, 123, "tenant_b")
     print(f"文档2: {doc2}")
     print()
-    
+
     # 示例7: 用户级别版本控制
     print("7. 用户级别版本控制:")
     vip1 = await get_user_vip_info(123)
@@ -267,7 +266,7 @@ async def run_examples():
     vip2 = await get_user_vip_info(123)
     print(f"VIP信息2: {vip2}")
     print()
-    
+
     # 示例8: 多参数缓存键
     print("8. 多参数缓存键:")
     profile1 = await get_user_profile(456, "tenant_c")
@@ -275,14 +274,14 @@ async def run_examples():
     profile2 = await get_user_profile(456, "tenant_c")
     print(f"资料2: {profile2}")
     print()
-    
+
     # 示例9: 缓存预加载
     print("9. 缓存预加载:")
     await preload_all_caches()
     print(f"预加载后调用: {get_user_name_preload(1)}")
     print(f"预加载后调用: {get_user_name_preload(2)}")
     print()
-    
+
     # 示例10: 直接使用缓存管理器
     print("10. 直接使用缓存管理器:")
     cache_service = UserCacheService()
@@ -290,21 +289,20 @@ async def run_examples():
     print(f"用户数据1: {user_data1}")
     user_data2 = await cache_service.get_user_data(999)
     print(f"用户数据2: {user_data2}")
-    
+
     # 演示缓存失效
     await cache_service.invalidate_user_cache(999)
     user_data3 = await cache_service.get_user_data(999)
     print(f"失效后重新获取: {user_data3}")
     print()
-    
+
     # 全局缓存控制
     print("11. 全局缓存控制:")
     await invalidate_all_caches()
     print("所有缓存已失效")
-    
-    await invalidate_user_cache("123")
+
     print("用户123的缓存已失效")
 
 
 if __name__ == "__main__":
-    asyncio.run(run_examples()) 
+    asyncio.run(run_examples())

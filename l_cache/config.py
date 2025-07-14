@@ -6,6 +6,23 @@ from .enums import CacheType, StorageType, SerializerType
 # 默认缓存前缀常量
 DEFAULT_PREFIX = "l_cache:"
 
+# 全局缓存主开关
+GLOBAL_CACHE_SWITCH = True
+
+def enable_global_cache():
+    """启用全局缓存功能"""
+    global GLOBAL_CACHE_SWITCH
+    GLOBAL_CACHE_SWITCH = True
+
+def disable_global_cache():
+    """禁用全局缓存功能"""
+    global GLOBAL_CACHE_SWITCH
+    GLOBAL_CACHE_SWITCH = False
+
+def is_global_cache_enabled():
+    """查询全局缓存开关状态"""
+    return GLOBAL_CACHE_SWITCH
+
 class CacheConfig(BaseModel):
     """
     缓存配置

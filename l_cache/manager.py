@@ -16,6 +16,7 @@ class UniversalCacheManager:
     
     支持内存和Redis两种存储后端，支持TTL和LRU两种缓存策略。
     提供同步和异步API，支持用户级别版本控制。
+    支持全局缓存开关，可以一键关闭所有缓存功能。
     """
 
     def __init__(self, config: Optional[CacheConfig] = None):
@@ -33,6 +34,16 @@ class UniversalCacheManager:
         else:
             raise ValueError(f"Unsupported storage type: {self.config.storage_type}")
 
+    @property
+    def is_cache_enabled(self) -> bool:
+        """
+        检查全局缓存是否已启用
+        
+        :return: 是否启用
+        """
+        from .config import is_global_cache_enabled
+        return is_global_cache_enabled()
+
     async def get(self, key: str, user_id: Optional[str] = None) -> Optional[Any]:
         """
         异步获取缓存值
@@ -41,6 +52,9 @@ class UniversalCacheManager:
         :param user_id: 用户ID，用于用户级别版本控制
         :return: 缓存值，如果不存在或已失效则返回None
         """
+        if not self.is_cache_enabled:
+            return None
+            
         try:
             # 构建带版本号的键
             versioned_key = self._build_versioned_key(key, user_id)
@@ -59,6 +73,9 @@ class UniversalCacheManager:
         :param user_id: 用户ID，用于用户级别版本控制
         :return: 是否设置成功
         """
+        if not self.is_cache_enabled:
+            return False
+            
         try:
             # 构建带版本号的键
             versioned_key = self._build_versioned_key(key, user_id)
@@ -76,6 +93,9 @@ class UniversalCacheManager:
         :param user_id: 用户ID，用于用户级别版本控制
         :return: 是否删除成功
         """
+        if not self.is_cache_enabled:
+            return False
+            
         try:
             # 构建带版本号的键
             versioned_key = self._build_versioned_key(key, user_id)
@@ -92,6 +112,9 @@ class UniversalCacheManager:
         :param user_id: 用户ID，用于用户级别版本控制
         :return: 缓存值，如果不存在或已失效则返回None
         """
+        if not self.is_cache_enabled:
+            return None
+            
         if self.config.storage_type != StorageType.MEMORY:
             raise ValueError("Sync operations are only supported for memory storage")
         
@@ -112,6 +135,9 @@ class UniversalCacheManager:
         :param user_id: 用户ID，用于用户级别版本控制
         :return: 是否设置成功
         """
+        if not self.is_cache_enabled:
+            return False
+            
         if self.config.storage_type != StorageType.MEMORY:
             raise ValueError("Sync operations are only supported for memory storage")
         
@@ -131,6 +157,9 @@ class UniversalCacheManager:
         :param user_id: 用户ID，用于用户级别版本控制
         :return: 是否删除成功
         """
+        if not self.is_cache_enabled:
+            return False
+            
         if self.config.storage_type != StorageType.MEMORY:
             raise ValueError("Sync operations are only supported for memory storage")
         

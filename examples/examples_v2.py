@@ -12,7 +12,7 @@ import asyncio
 import time
 from typing import Dict, Any
 
-from .. import (
+from l_cache import (
     u_l_cache, u_l_cache, CacheKeyEnum, StorageType, CacheType, SerializerType,
     UniversalCacheManager, CacheConfig, get_cache_statistics, reset_cache_statistics,
     start_cache_memory_monitoring, get_cache_memory_usage
