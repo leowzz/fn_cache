@@ -1,7 +1,7 @@
 """
 缓存内存监控功能使用示例
 
-这个示例展示了如何使用 l_cache 的内存监控功能来跟踪和管理缓存的内存使用情况。
+这个示例展示了如何使用 fn_cache 的内存监控功能来跟踪和管理缓存的内存使用情况。
 """
 
 import asyncio
@@ -9,7 +9,7 @@ import time
 import sys
 import os
 
-from l_cache import (
+from fn_cache import (
     UniversalCacheManager,
     CacheConfig,
     StorageType,
@@ -200,7 +200,7 @@ def example_memory_analysis():
 
 async def main():
     """主函数"""
-    print("l_cache 内存监控功能示例")
+    print("fn_cache 内存监控功能示例")
     print("=" * 50)
     
     # 运行各种示例

@@ -1,6 +1,6 @@
-# l_cache: 轻量级通用缓存库 v2.0
+# fn_cache: 轻量级通用缓存库
 
-`l_cache` 是一个专为现代 Python 应用设计的轻量级缓存库，提供统一的接口、多种缓存策略和存储后端。无论您需要简单的内存缓存还是分布式 Redis 缓存，`l_cache` 都能轻松应对。
+`fn_cache` 是一个专为现代 Python 应用设计的轻量级缓存库，提供统一的接口、多种缓存策略和存储后端。无论您需要简单的内存缓存还是分布式 Redis 缓存，`fn_cache` 都能轻松应对。
 
 ## ✨ 核心特性
 
@@ -24,13 +24,15 @@
 使用 `u_l_cache` 装饰器，可以轻松为函数添加缓存功能。
 
 ```python
-from l_cache import u_l_cache, SerializerType
+from fn_cache import u_l_cache, SerializerType
+
 
 # 使用内存TTL缓存 (默认)
 @u_l_cache(ttl_seconds=60)
 def get_some_data(user_id: int):
     print("正在执行复杂的数据查询...")
     return f"这是用户 {user_id} 的数据"
+
 
 # 使用不同序列化器
 @u_l_cache(
@@ -40,6 +42,7 @@ def get_some_data(user_id: int):
 )
 def get_user_profile(user_id: int):
     return {"user_id": user_id, "name": f"用户_{user_id}"}
+
 
 # 第一次调用，函数会执行
 get_some_data(123)  # 输出: "正在执行复杂的数据查询..."
@@ -53,12 +56,14 @@ get_some_data(123)  # 无输出
 使用 `l_user_cache` 装饰器，可以基于预定义的缓存键模板进行缓存，支持用户级别版本控制。
 
 ```python
-from l_cache import l_user_cache, CacheKeyEnum, StorageType
+from fn_cache import l_user_cache, CacheKeyEnum, StorageType
+
 
 # 定义缓存键枚举
 class UserCacheKeyEnum(CacheKeyEnum):
     USER_VIP_INFO = "user:vip:info:{user_id}"
     USER_PROFILE = "user:profile:{user_id}:{tenant_id}"
+
 
 # 使用缓存键枚举装饰器
 @l_user_cache(
@@ -97,8 +102,9 @@ async def fetch_user_data(user_id: int):
 对于需要快速响应的内存缓存数据，可以使用预加载功能，在服务启动时就将热点数据加载到缓存中。
 
 ```python
-from l_cache import u_l_cache, preload_all_caches
+from fn_cache import u_l_cache, preload_all_caches
 import asyncio
+
 
 # 1. 定义一个数据提供者函数
 def user_ids_provider():
@@ -106,11 +112,13 @@ def user_ids_provider():
     for user_id in [1, 2, 3]:
         yield (user_id,), {}  # (args, kwargs)
 
+
 # 2. 在装饰器中指定 preload_provider
 @u_l_cache(storage_type='memory', preload_provider=user_ids_provider)
 def get_user_name(user_id: int):
     print(f"从数据库查询用户 {user_id}...")
     return f"用户_{user_id}"
+
 
 # 3. 在应用启动时，调用预加载函数
 async def main():
@@ -120,6 +128,7 @@ async def main():
     print(get_user_name(1))  # 直接输出 "用户_1"
     print(get_user_name(2))  # 直接输出 "用户_2"
 
+
 if __name__ == "__main__":
     asyncio.run(main())
 ```
@@ -127,7 +136,7 @@ if __name__ == "__main__":
 ### 5. 缓存统计和监控
 
 ```python
-from l_cache import get_cache_statistics, start_cache_memory_monitoring
+from fn_cache import get_cache_statistics, start_cache_memory_monitoring
 
 # 启动内存监控
 start_cache_memory_monitoring(interval_seconds=300)  # 每5分钟监控一次
@@ -144,7 +153,7 @@ for cache_id, cache_stats in stats.items():
 
 ### `u_l_cache` 装饰器类
 
-这是 `l_cache` 的核心装饰器。
+这是 `fn_cache` 的核心装饰器。
 
 **参数**:
 
@@ -155,7 +164,7 @@ for cache_id, cache_stats in stats.items():
 - `max_size` (`int`): LRU 缓存的最大容量，默认为 1000
 - `key_func` (`Callable`): 自定义缓存键生成函数。接收与被装饰函数相同的参数
 - `key_params` (`list[str]`): 用于自动生成缓存键的参数名列表
-- `prefix` (`str`): 缓存键的前缀，默认为 `"l_cache:"`
+- `prefix` (`str`): 缓存键的前缀，默认为 `"fn_cache:"`
 - `preload_provider` (`Callable`): 一个函数，返回一个可迭代对象，用于缓存预加载。迭代的每个元素都是一个 `(args, kwargs)` 元组
 
 ### `l_user_cache` 装饰器类
@@ -169,7 +178,7 @@ for cache_id, cache_stats in stats.items():
 - `serializer_type` (`SerializerType`): 序列化类型，默认为 `SerializerType.JSON`
 - `make_expire_sec_func` (`Callable`): 动态生成过期时间的函数，接收缓存值作为参数
 - `key_params` (`list[str]`): 需要从函数参数中获取的key参数名列表
-- `prefix` (`str`): 缓存key前缀，默认为 `"l_cache:"`
+- `prefix` (`str`): 缓存key前缀，默认为 `"fn_cache:"`
 - `user_id_param` (`str`): 用户ID参数名，用于从函数参数中提取用户ID，默认为 `"user_id"`
 
 ### `CacheKeyEnum` 基类
@@ -272,7 +281,8 @@ def get_document(doc_id: int, user_id: int, tenant_id: str):
 ### 用户级别缓存管理
 
 ```python
-from l_cache import UniversalCacheManager, CacheConfig, StorageType
+from fn_cache import UniversalCacheManager, CacheConfig, StorageType
+
 
 class UserCacheService:
     def __init__(self):
@@ -282,22 +292,22 @@ class UserCacheService:
             prefix="user_cache:"
         )
         self.cache = UniversalCacheManager(config)
-    
+
     async def get_user_data(self, user_id: int):
         cache_key = f"user_data:{user_id}"
-        
+
         # 使用用户级别版本控制
         cached_data = await self.cache.get(cache_key, user_id=str(user_id))
         if cached_data:
             return cached_data
-        
+
         # 缓存未命中，获取数据
         user_data = await self._fetch_user_data(user_id)
-        
+
         # 存储到缓存，使用用户级别版本控制
         await self.cache.set(cache_key, user_data, user_id=str(user_id))
         return user_data
-    
+
     async def invalidate_user_cache(self, user_id: int):
         """使用户的所有缓存失效"""
         await self.cache.invalidate_user_cache(str(user_id))
@@ -334,22 +344,22 @@ async def get_user_profile(user_id: int, tenant_id: str):
 ### CacheConfig 配置类
 
 ```python
-from l_cache import CacheConfig, CacheType, StorageType, SerializerType
+from fn_cache import CacheConfig, CacheType, StorageType, SerializerType
 
 config = CacheConfig(
-    cache_type=CacheType.TTL,      # 缓存策略: TTL 或 LRU
+    cache_type=CacheType.TTL,  # 缓存策略: TTL 或 LRU
     storage_type=StorageType.MEMORY,  # 存储后端: MEMORY 或 REDIS
     serializer_type=SerializerType.JSON,  # 序列化类型: JSON, PICKLE, MESSAGEPACK, STRING
-    ttl_seconds=600,               # TTL 过期时间（秒）
-    max_size=1000,                 # LRU 最大容量
-    prefix="cache:",               # 缓存键前缀
-    global_version_key="l_cache:global:version",  # 全局版本号键
-    user_version_key="l_cache:user:version:{user_id}",  # 用户版本号键
-    make_expire_sec_func=None,     # 动态过期时间函数
-    serializer_kwargs={},          # 序列化器参数
-    enable_statistics=True,        # 是否启用统计
-    enable_memory_monitoring=True, # 是否启用内存监控
-    redis_config={                 # Redis连接配置
+    ttl_seconds=600,  # TTL 过期时间（秒）
+    max_size=1000,  # LRU 最大容量
+    prefix="cache:",  # 缓存键前缀
+    global_version_key="fn_cache:global:version",  # 全局版本号键
+    user_version_key="fn_cache:user:version:{user_id}",  # 用户版本号键
+    make_expire_sec_func=None,  # 动态过期时间函数
+    serializer_kwargs={},  # 序列化器参数
+    enable_statistics=True,  # 是否启用统计
+    enable_memory_monitoring=True,  # 是否启用内存监控
+    redis_config={  # Redis连接配置
         "host": "localhost",
         "port": 6379,
         "db": 0,
@@ -398,7 +408,7 @@ config = CacheConfig(
 ## 📦 安装
 
 ```bash
-pip install l-cache
+pip install fn_cache
 ```
 
 ## 🤝 贡献

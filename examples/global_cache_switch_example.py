@@ -7,8 +7,8 @@
 
 import asyncio
 import time
-from l_cache.decorators import cached, enable_global_cache, disable_global_cache, is_global_cache_enabled
-from l_cache.decorators import enable_all_registered_caches, disable_all_registered_caches, get_all_cache_status
+from fn_cache.decorators import cached, enable_global_cache, disable_global_cache, is_global_cache_enabled
+from fn_cache.decorators import enable_all_registered_caches, disable_all_registered_caches, get_all_cache_status
 
 
 # 示例1：使用默认配置的缓存装饰器

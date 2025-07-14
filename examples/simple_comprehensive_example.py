@@ -23,7 +23,7 @@ from typing import Dict, List, Any
 from dataclasses import dataclass
 
 # 导入 Leo Cache 核心组件
-from l_cache import (
+from fn_cache import (
     # 核心管理器和存储
     UniversalCacheManager,
     

@@ -7,7 +7,7 @@ import asyncio
 from enum import Enum
 from unittest.mock import AsyncMock, MagicMock
 
-from l_cache import (
+from fn_cache import (
     UniversalCacheManager,
     CacheConfig,
     CacheType,
@@ -16,7 +16,7 @@ from l_cache import (
 
     CacheKeyEnum,
 )
-from l_cache.storages import MemoryCacheStorage
+from fn_cache.storages import MemoryCacheStorage
 
 
 class CacheKeyEnum(str, Enum):

@@ -108,7 +108,7 @@ python run_tests.py --fast
 ### 生成覆盖率报告
 ```bash
 # 生成覆盖率报告
-pytest --cov=l_cache --cov-report=html
+pytest --cov=fn_cache --cov-report=html
 
 # 使用测试脚本
 python run_tests.py --coverage
@@ -173,7 +173,7 @@ python run_tests.py --coverage
 - name: Run tests
   run: |
     pip install -r requirements-dev.txt
-    pytest --cov=l_cache --cov-report=xml
+    pytest --cov=fn_cache --cov-report=xml
 ```
 
 ### 本地开发
@@ -182,10 +182,10 @@ python run_tests.py --coverage
 python run_tests.py --coverage
 
 # 检查代码质量
-black l_cache tests
-isort l_cache tests
-flake8 l_cache tests
-mypy l_cache
+black fn_cache tests
+isort fn_cache tests
+flake8 fn_cache tests
+mypy fn_cache
 ```
 
 ## 测试最佳实践

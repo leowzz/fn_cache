@@ -9,11 +9,11 @@ from unittest.mock import Mock, patch, AsyncMock
 
 import pytest
 
-from l_cache import (
+from fn_cache import (
     cached, CacheKeyEnum, CacheType, StorageType,
     invalidate_all_caches, preload_all_caches
 )
-from l_cache.decorators import _CacheRegistry
+from fn_cache.decorators import _CacheRegistry
 
 
 class CacheKeyEnum(str, Enum):
@@ -310,7 +310,7 @@ class TestCacheRegistry:
         registry = _CacheRegistry()
 
         # 使用真实的缓存管理器
-        from l_cache import UniversalCacheManager, CacheConfig
+        from fn_cache import UniversalCacheManager, CacheConfig
         real_manager = UniversalCacheManager(CacheConfig(storage_type=StorageType.MEMORY))
 
         # 模拟函数
@@ -423,7 +423,7 @@ class TestGlobalFunctions:
     @pytest.mark.asyncio
     async def test_preload_all_caches(self):
         """测试预加载所有缓存"""
-        with patch('l_cache.decorators.cache_registry') as mock_registry:
+        with patch('fn_cache.decorators.cache_registry') as mock_registry:
             mock_registry.preload_all = AsyncMock()
             await preload_all_caches()
             mock_registry.preload_all.assert_called_once()
@@ -431,7 +431,7 @@ class TestGlobalFunctions:
     @pytest.mark.asyncio
     async def test_invalidate_all_caches(self):
         """测试使所有缓存失效"""
-        with patch('l_cache.decorators.UniversalCacheManager') as mock_manager_class:
+        with patch('fn_cache.decorators.UniversalCacheManager') as mock_manager_class:
             mock_manager = AsyncMock()
             mock_manager_class.return_value = mock_manager
             mock_manager.invalidate_all = AsyncMock(return_value=True)

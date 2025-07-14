@@ -1,7 +1,7 @@
 """
 存储层测试模块
 
-测试 l_cache.storages 模块中的各种存储实现。
+测试 fn_cache.storages 模块中的各种存储实现。
 """
 
 import pytest
@@ -10,8 +10,8 @@ import time
 from unittest.mock import patch, AsyncMock, Mock
 from collections import OrderedDict
 
-from l_cache.storages import MemoryCacheStorage
-from l_cache.config import CacheConfig, CacheType
+from fn_cache.storages import MemoryCacheStorage
+from fn_cache.config import CacheConfig, CacheType
 
 
 class TestMemoryCacheStorage:

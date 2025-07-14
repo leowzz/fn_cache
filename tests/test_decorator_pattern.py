@@ -7,9 +7,9 @@ import asyncio
 import time
 from unittest.mock import patch, MagicMock
 
-from l_cache.decorators import cached
-from l_cache.enums import CacheType, StorageType, CacheKeyEnum
-from l_cache.config import DEFAULT_PREFIX
+from fn_cache.decorators import cached
+from fn_cache.enums import CacheType, StorageType, CacheKeyEnum
+from fn_cache.config import DEFAULT_PREFIX
 
 
 class TestDecoratorPattern:

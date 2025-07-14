@@ -23,7 +23,7 @@ async def check_cache_status(storage_type: str) -> dict:
     
     try:
         # 测试基本操作
-        test_key = "l_cache:cli:test"
+        test_key = "fn_cache:cli:test"
         test_value = {"status": "ok", "timestamp": asyncio.get_event_loop().time()}
         
         # 设置测试值
@@ -132,11 +132,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例用法:
-  l-cache status --storage memory
-  l-cache status --storage redis
-  l-cache clear --storage memory
-  l-cache clear --storage redis --pattern "user:*"
-  l-cache info --storage memory
+  fn_cache status --storage memory
+  fn_cache status --storage redis
+  fn_cache clear --storage memory
+  fn_cache clear --storage redis --pattern "user:*"
+  fn_cache info --storage memory
         """
     )
     

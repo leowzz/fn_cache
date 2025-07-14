@@ -16,21 +16,21 @@ def read_readme():
 
 # 读取版本信息
 def get_version():
-    with open("l_cache/__init__.py", "r", encoding="utf-8") as f:
+    with open("fn_cache/__init__.py", "r", encoding="utf-8") as f:
         for line in f:
             if line.startswith("__version__"):
                 return line.split("=")[1].strip().strip('"\'')
     return "1.0.0"
 
 setup(
-    name="l-cache",
+    name="fn_cache",
     version=get_version(),
     author="WangZhanze",
     author_email="leolswq@163.com",
     description="轻量级通用缓存库",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/leowzz/l-cache",
+    url="https://github.com/leowzz/fn_cache",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -70,9 +70,9 @@ setup(
     },
     keywords="cache, redis, memory, ttl, lru, async, decorator",
     project_urls={
-        "Bug Reports": "https://github.com/leowzz/l-cache/issues",
-        "Source": "https://github.com/leowzz/l-cache",
-        "Documentation": "https://l-cache.readthedocs.io/",
+        "Bug Reports": "https://github.com/leowzz/fn_cache/issues",
+        "Source": "https://github.com/leowzz/fn_cache",
+        "Documentation": "https://fn_cache.readthedocs.io/",
     },
     include_package_data=True,
     zip_safe=False,

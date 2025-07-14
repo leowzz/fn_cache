@@ -6,8 +6,8 @@ import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
 
-from l_cache import UniversalCacheManager, CacheConfig, CacheType, StorageType
-from l_cache.storages import MemoryCacheStorage
+from fn_cache import UniversalCacheManager, CacheConfig, CacheType, StorageType
+from fn_cache.storages import MemoryCacheStorage
 
 
 class TestUniversalCacheManager:

@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "l-cache"
+name = "fn-cache"
 dynamic = ["version"]
 description = "轻量级通用缓存库"
 readme = "README.md"
@@ -14,11 +14,10 @@ authors = [
 maintainers = [
     {name = "WangZhanze", email = "leolswq@163.com"}
 ]
-keywords = ["cache", "redis", "memory", "ttl", "lru", "async", "decorator"]
+keywords = ["cache", "memory", "ttl", "lru", "async", "decorator"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
@@ -32,8 +31,10 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "redis>=4.0.0",
     "typing-extensions>=4.0.0;python_version<'3.9'",
+    "pydantic~=2.10.6",
+    "fastapi>0.100.0,<0.116.0",
+    "loguru~=0.7.3",
 ]
 
 [project.optional-dependencies]
@@ -53,20 +54,20 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/leowzz/l-cache"
-Documentation = "https://l-cache.readthedocs.io/"
-Repository = "https://github.com/leowzz/l-cache"
-"Bug Tracker" = "https://github.com/leowzz/l-cache/issues"
+Homepage = "https://github.com/leowzz/fn_cache"
+Documentation = "https://fn_cache.readthedocs.io/"
+Repository = "https://github.com/leowzz/fn_cache"
+"Bug Tracker" = "https://github.com/leowzz/fn_cache/issues"
 
 [project.scripts]
-l-cache = "l_cache.cli:main"
+fn_cache = "fn_cache.cli:main"
 
 [tool.setuptools.dynamic]
-version = {attr = "l_cache.__version__"}
+version = {attr = "fn_cache.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["l_cache*"]
+include = ["fn_cache*"]
 
 [tool.black]
 line-length = 88
@@ -90,7 +91,7 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["l_cache"]
+known_first_party = ["fn_cache"]
 
 [tool.mypy]
 python_version = "3.8"
@@ -121,7 +122,7 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=l_cache",
+    "--cov=fn_cache",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
@@ -129,7 +130,7 @@ addopts = [
 asyncio_mode = "auto"
 
 [tool.coverage.run]
-source = ["l_cache"]
+source = ["fn_cache"]
 omit = [
     "*/tests/*",
     "*/test_*",

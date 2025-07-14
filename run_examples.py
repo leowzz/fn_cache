@@ -64,7 +64,7 @@ def check_dependencies():
     
     # 检查基本依赖
     try:
-        import l_cache
+        import fn_cache
         print("✅ Leo Cache 库已安装")
     except ImportError:
         print("❌ Leo Cache 库未安装，正在安装...")

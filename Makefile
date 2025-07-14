@@ -29,17 +29,17 @@ test:
 
 # 运行测试并生成覆盖率报告
 test-cov:
-	pytest tests/ -v --cov=l_cache --cov-report=html --cov-report=term-missing
+	pytest tests/ -v --cov=fn_cache --cov-report=html --cov-report=term-missing
 
 # 代码检查
 lint:
-	flake8 l_cache/ tests/
-	mypy l_cache/
+	flake8 fn_cache/ tests/
+	mypy fn_cache/
 
 # 格式化代码
 format:
-	black l_cache/ tests/
-	isort l_cache/ tests/
+	black fn_cache/ tests/
+	isort fn_cache/ tests/
 
 # 清理构建文件
 clean:
@@ -61,14 +61,17 @@ build: clean
 publish: build
 	twine upload dist/*
 
+publish-test: build
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/* --verbose
+
 # 本地安装开发版本
 install-local: clean
 	pip install -e .
 
 # 运行示例
 example:
-	python -m l_cache.examples
+	python -m fn_cache.examples
 
 # 运行 CLI 工具
 cli:
-	l-cache --help 
+	fn_cache --help

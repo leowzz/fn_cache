@@ -6,9 +6,9 @@ import asyncio
 import time
 from typing import Dict, Any
 
-from l_cache.decorators import cached
-from l_cache.enums import CacheType, StorageType, CacheKeyEnum
-from l_cache.config import DEFAULT_PREFIX
+from fn_cache.decorators import cached
+from fn_cache.enums import CacheType, StorageType, CacheKeyEnum
+from fn_cache.config import DEFAULT_PREFIX
 
 
 # 示例1: 基本使用
@@ -140,7 +140,7 @@ async def main():
     
     # 演示缓存统计
     print("6. 缓存统计信息:")
-    from l_cache.decorators import get_cache_statistics
+    from fn_cache.decorators import get_cache_statistics
     stats = get_cache_statistics()
     print(f"缓存统计: {stats}")
 

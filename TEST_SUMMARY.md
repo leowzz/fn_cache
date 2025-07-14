@@ -188,7 +188,7 @@ python run_tests.py --coverage
 - name: Run tests
   run: |
     pip install -r requirements-dev.txt
-    pytest --cov=l_cache --cov-report=xml
+    pytest --cov=fn_cache --cov-report=xml
 ```
 
 ### 2. 本地开发
@@ -197,10 +197,10 @@ python run_tests.py --coverage
 python run_tests.py --coverage
 
 # 代码质量检查
-black l_cache tests
-isort l_cache tests
-flake8 l_cache tests
-mypy l_cache
+black fn_cache tests
+isort fn_cache tests
+flake8 fn_cache tests
+mypy fn_cache
 ```
 
 ## 维护和扩展

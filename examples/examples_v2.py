@@ -1,7 +1,7 @@
 """
 L-Cache v2.0 使用示例
 
-展示优化后的 l_cache 库的新功能，包括：
+展示优化后的 fn_cache 库的新功能，包括：
 - 多种序列化格式支持
 - 缓存统计和性能监控
 - 更灵活的配置选项
@@ -12,7 +12,7 @@ import asyncio
 import time
 from typing import Dict, Any
 
-from l_cache import (
+from fn_cache import (
     cached, cached, CacheKeyEnum, StorageType, CacheType, SerializerType,
     UniversalCacheManager, CacheConfig, get_cache_statistics, reset_cache_statistics,
     start_cache_memory_monitoring, get_cache_memory_usage

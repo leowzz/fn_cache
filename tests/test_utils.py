@@ -1,14 +1,14 @@
 """
 工具函数测试模块
 
-测试 l_cache.utils 模块中的各种工具函数。
+测试 fn_cache.utils 模块中的各种工具函数。
 """
 
 import pytest
 from unittest.mock import patch
-from l_cache.utils import strify, safe_redis_operation, safe_redis_void_operation
-from l_cache.utils.cache_key import format_cache_key, validate_cache_key
-from l_cache.utils import jsonify
+from fn_cache.utils import strify, safe_redis_operation, safe_redis_void_operation
+from fn_cache.utils.cache_key import format_cache_key, validate_cache_key
+from fn_cache.utils import jsonify
 import json
 
 
@@ -113,7 +113,7 @@ class TestSafeRedisOperation:
     @pytest.mark.asyncio
     async def test_safe_redis_operation_with_logging(self):
         """测试带日志记录的安全Redis操作"""
-        with patch('l_cache.utils.safe_oper.logger.error') as mock_logger:
+        with patch('fn_cache.utils.safe_oper.logger.error') as mock_logger:
             async def mock_operation():
                 raise Exception("Redis error")
     
@@ -157,7 +157,7 @@ class TestSafeRedisVoidOperation:
     @pytest.mark.asyncio
     async def test_safe_redis_void_operation_with_logging(self):
         """测试带日志记录的空Redis操作"""
-        with patch('l_cache.utils.safe_oper.logger.error') as mock_logger:
+        with patch('fn_cache.utils.safe_oper.logger.error') as mock_logger:
             async def mock_operation():
                 raise Exception("Redis error")
             

@@ -5,7 +5,7 @@ from datetime import datetime
 from loguru import logger
 from pydantic import BaseModel
 
-from l_cache import (
+from fn_cache import (
     SerializerType,
     cached,
     get_cache_statistics,

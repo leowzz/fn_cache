@@ -7,7 +7,7 @@ import time
 import pytest
 from unittest.mock import Mock, patch
 
-from l_cache import (
+from fn_cache import (
     UniversalCacheManager,
     CacheConfig,
     StorageType,
@@ -21,7 +21,7 @@ from l_cache import (
     MemoryUsageInfo,
     cached,
 )
-from l_cache.decorators import cache_registry
+from fn_cache.decorators import cache_registry
 
 
 class TestMemoryMonitoring:

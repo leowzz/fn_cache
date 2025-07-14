@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-测试 l_cache v2.0 新功能
+测试 fn_cache v2.0 新功能
 
 验证以下功能：
 1. 多种序列化格式支持
@@ -19,7 +19,7 @@ from enum import Enum
 # 添加项目根目录到 Python 路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from l_cache import (
+from fn_cache import (
     cached, StorageType, CacheType, SerializerType,
     UniversalCacheManager, CacheConfig, get_cache_statistics, reset_cache_statistics,
     start_cache_memory_monitoring, get_cache_memory_usage, preload_all_caches

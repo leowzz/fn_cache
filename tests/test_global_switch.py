@@ -6,7 +6,7 @@
 import pytest
 import asyncio
 import time
-from l_cache.decorators import (
+from fn_cache.decorators import (
     cached, 
     enable_global_cache, 
     disable_global_cache, 
@@ -15,7 +15,7 @@ from l_cache.decorators import (
     disable_all_registered_caches,
     get_all_cache_status
 )
-from l_cache.manager import UniversalCacheManager
+from fn_cache.manager import UniversalCacheManager
 
 
 # 测试用的缓存函数

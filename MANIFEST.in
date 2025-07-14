@@ -2,7 +2,7 @@ include README.md
 include LICENSE
 include pyproject.toml
 include setup.py
-recursive-include l_cache *.py
+recursive-include fn_cache *.py
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 recursive-exclude * *.so

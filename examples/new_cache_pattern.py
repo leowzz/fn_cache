@@ -13,7 +13,7 @@ import time
 import sys
 import os
 
-from l_cache import cached
+from fn_cache import cached
 
 
 def example_basic_usage():

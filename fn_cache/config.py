@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from .enums import CacheType, StorageType, SerializerType
 
 # 默认缓存前缀常量
-DEFAULT_PREFIX = "l_cache:"
+DEFAULT_PREFIX = "fn_cache:"
 
 # 全局缓存主开关
 GLOBAL_CACHE_SWITCH = True

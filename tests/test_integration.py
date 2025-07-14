@@ -8,7 +8,7 @@ import time
 from enum import Enum
 from unittest.mock import Mock, patch, AsyncMock
 
-from l_cache import (
+from fn_cache import (
     UniversalCacheManager, CacheConfig, CacheType, StorageType,
     cached, CacheKeyEnum, invalidate_all_caches,
     preload_all_caches
