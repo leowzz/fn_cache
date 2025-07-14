@@ -580,79 +580,13 @@ class u_l_cache:
         :param kwargs: 关键字参数
         :return: 函数执行结果
         """
-        # 检查全局缓存开关
-        if not self.cache_manager.is_cache_enabled:
-            # 全局缓存已禁用，直接执行原函数
-            logger.info(f"Global cache disabled, skipping cache for {func.__name__}")
-            return await func(*args, **kwargs)
-            
-        start_time = time.perf_counter()
-        cache_key = self._build_cache_key(func, args, kwargs)
-        lock = self._get_lock(cache_key, is_async=True)
-
-        # 如果有锁，整个操作都在锁保护下进行
-        if lock:
-            async with lock:
-                # 缓存读取逻辑
-                if cache_read:
-                    cached = await self.cache_manager.get(cache_key)
-                    if cached is not None:
-                        elapsed = time.perf_counter() - start_time
-                        logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
-                        return self._parse_cached_value(cached)
-                
-                # 执行原函数
-                result = await func(*args, **kwargs)
-                
-                # 缓存写入逻辑
-                if cache_write and result is not None:
-                    # 计算过期时间
-                    ttl_seconds = self.config.ttl_seconds
-                    if self.make_expire_sec_func:
-                        ttl_seconds = self.make_expire_sec_func(result) or ttl_seconds
-                    
-                    if wait_for_write:
-                        await self.cache_manager.set(cache_key, result, ttl_seconds)
-                    else:
-                        # 异步写入，不等待完成
-                        asyncio.create_task(
-                            self.cache_manager.set(cache_key, result, ttl_seconds)
-                        )
-
-                elapsed = time.perf_counter() - start_time
-                logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
-                return result
-        else:
-            # 无锁情况下的逻辑
-            # 缓存读取逻辑
-            if cache_read:
-                cached = await self.cache_manager.get(cache_key)
-                if cached is not None:
-                    elapsed = time.perf_counter() - start_time
-                    logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
-                    return self._parse_cached_value(cached)
-            
-            # 执行原函数
-            result = await func(*args, **kwargs)
-            
-            # 缓存写入逻辑
-            if cache_write and result is not None:
-                # 计算过期时间
-                ttl_seconds = self.config.ttl_seconds
-                if self.make_expire_sec_func:
-                    ttl_seconds = self.make_expire_sec_func(result) or ttl_seconds
-                
-                if wait_for_write:
-                    await self.cache_manager.set(cache_key, result, ttl_seconds)
-                else:
-                    # 异步写入，不等待完成
-                    asyncio.create_task(
-                        self.cache_manager.set(cache_key, result, ttl_seconds)
-                    )
-
-            elapsed = time.perf_counter() - start_time
-            logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
-            return result
+        return await self._decorator_common(
+            func, args, kwargs,
+            is_async=True,
+            cache_read=cache_read,
+            cache_write=cache_write,
+            wait_for_write=wait_for_write
+        )
 
     def decorator_sync(
         self,
@@ -672,66 +606,96 @@ class u_l_cache:
         :param kwargs: 关键字参数
         :return: 函数执行结果
         """
+        return self._decorator_common(
+            func, args, kwargs,
+            is_async=False,
+            cache_read=cache_read,
+            cache_write=cache_write
+        )
+
+    def _get_ttl(self, result):
+        ttl_seconds = self.config.ttl_seconds
+        if self.make_expire_sec_func:
+            custom_ttl = self.make_expire_sec_func(result)
+            if custom_ttl:
+                ttl_seconds = custom_ttl
+        return ttl_seconds
+
+    def _decorator_common(
+        self,
+        func: Callable,
+        args: tuple,
+        kwargs: dict,
+        is_async: bool = False,
+        cache_read: bool = True,
+        cache_write: bool = True,
+        wait_for_write: bool = True,
+    ):
+        """
+        通用装饰器核心逻辑，支持同步和异步
+        """
         # 检查全局缓存开关
         if not self.cache_manager.is_cache_enabled:
-            # 全局缓存已禁用，直接执行原函数
-            return func(*args, **kwargs)
-            
+            if is_async:
+                logger.info(f"Global cache disabled, skipping cache for {func.__name__}")
+                return func(*args, **kwargs) if not asyncio.iscoroutinefunction(func) else asyncio.ensure_future(func(*args, **kwargs))
+            else:
+                return func(*args, **kwargs)
+
         start_time = time.perf_counter()
         cache_key = self._build_cache_key(func, args, kwargs)
-        lock = self._get_lock(cache_key, is_async=False)
+        lock = self._get_lock(cache_key, is_async=is_async)
 
-        # 如果有锁，整个操作都在锁保护下进行
-        if lock:
-            with lock:
-                # 缓存读取逻辑
-                if cache_read:
-                    cached = self._get_from_cache_sync(cache_key)
-                    if cached is not None:
-                        elapsed = time.perf_counter() - start_time
-                        logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
-                        return self._parse_cached_value(cached)
-                
-                # 执行原函数
-                result = func(*args, **kwargs)
-                
-                # 缓存写入逻辑
-                if cache_write and result is not None:
-                    # 计算过期时间
-                    ttl_seconds = self.config.ttl_seconds
-                    if self.make_expire_sec_func:
-                        ttl_seconds = self.make_expire_sec_func(result) or ttl_seconds
-                    
-                    self._set_to_cache_sync(cache_key, result, ttl_seconds)
-
-                elapsed = time.perf_counter() - start_time
-                logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
-                return result
-        else:
-            # 无锁情况下的逻辑
+        async def async_inner():
             # 缓存读取逻辑
+            if cache_read:
+                cached = await self.cache_manager.get(cache_key)
+                if cached is not None:
+                    elapsed = time.perf_counter() - start_time
+                    logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
+                    return self._parse_cached_value(cached)
+            # 执行原函数
+            result = await func(*args, **kwargs)
+            # 缓存写入逻辑
+            if cache_write and result is not None:
+                ttl_seconds = self._get_ttl(result)
+                if wait_for_write:
+                    await self.cache_manager.set(cache_key, result, ttl_seconds)
+                else:
+                    asyncio.create_task(self.cache_manager.set(cache_key, result, ttl_seconds))
+            elapsed = time.perf_counter() - start_time
+            logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
+            return result
+
+        def sync_inner():
             if cache_read:
                 cached = self._get_from_cache_sync(cache_key)
                 if cached is not None:
                     elapsed = time.perf_counter() - start_time
                     logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
                     return self._parse_cached_value(cached)
-            
-            # 执行原函数
             result = func(*args, **kwargs)
-            
-            # 缓存写入逻辑
             if cache_write and result is not None:
-                # 计算过期时间
-                ttl_seconds = self.config.ttl_seconds
-                if self.make_expire_sec_func:
-                    ttl_seconds = self.make_expire_sec_func(result) or ttl_seconds
-                
+                ttl_seconds = self._get_ttl(result)
                 self._set_to_cache_sync(cache_key, result, ttl_seconds)
-
             elapsed = time.perf_counter() - start_time
             logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
             return result
+
+        if is_async:
+            if lock:
+                async def locked_async():
+                    async with lock:
+                        return await async_inner()
+                return locked_async()
+            else:
+                return async_inner()
+        else:
+            if lock:
+                with lock:
+                    return sync_inner()
+            else:
+                return sync_inner()
 
 
 
