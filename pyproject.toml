@@ -55,7 +55,7 @@ docs = [
 
 [project.urls]
 Homepage = "https://github.com/leowzz/fn_cache"
-Documentation = "https://fn_cache.readthedocs.io/"
+Documentation = "https://fn-cache.readthedocs.io/"
 Repository = "https://github.com/leowzz/fn_cache"
 "Bug Tracker" = "https://github.com/leowzz/fn_cache/issues"
 
