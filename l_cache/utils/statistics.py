@@ -91,61 +91,55 @@ class CacheStatisticsManager:
         self._lock = threading.RLock()
         self._enabled = True
     
+    def _update_response_time_stats(self, stats: CacheStatistics, response_time: float):
+        """统一更新响应时间相关统计"""
+        stats.total_response_time += response_time
+        stats.min_r_t = min(stats.min_r_t, response_time)
+        stats.max_r_t = max(stats.max_r_t, response_time)
+
     def record_hit(self, cache_id: str, response_time: float = 0.0):
         """记录缓存命中"""
         if not self._enabled:
             return
-        
         with self._lock:
             stats = self._statistics[cache_id]
             stats.hits += 1
             stats.total_requests += 1
-            stats.total_response_time += response_time
-            stats.min_r_t = min(stats.min_r_t, response_time)
-            stats.max_r_t = max(stats.max_r_t, response_time)
+            self._update_response_time_stats(stats, response_time)
             # 新增命中耗时统计
             stats.hit_total_time += response_time
             stats.hit_count += 1
-    
+
     def record_miss(self, cache_id: str, response_time: float = 0.0):
         """记录缓存未命中"""
         if not self._enabled:
             return
-        
         with self._lock:
             stats = self._statistics[cache_id]
             stats.misses += 1
             stats.total_requests += 1
-            stats.total_response_time += response_time
-            stats.min_r_t = min(stats.min_r_t, response_time)
-            stats.max_r_t = max(stats.max_r_t, response_time)
+            self._update_response_time_stats(stats, response_time)
             # 新增未命中耗时统计
             stats.miss_total_time += response_time
             stats.miss_count += 1
-    
+
     def record_set(self, cache_id: str, response_time: float = 0.0):
         """记录缓存设置"""
         if not self._enabled:
             return
-        
         with self._lock:
             stats = self._statistics[cache_id]
             stats.sets += 1
-            stats.total_response_time += response_time
-            stats.min_r_t = min(stats.min_r_t, response_time)
-            stats.max_r_t = max(stats.max_r_t, response_time)
-    
+            self._update_response_time_stats(stats, response_time)
+
     def record_delete(self, cache_id: str, response_time: float = 0.0):
         """记录缓存删除"""
         if not self._enabled:
             return
-        
         with self._lock:
             stats = self._statistics[cache_id]
             stats.deletes += 1
-            stats.total_response_time += response_time
-            stats.min_r_t = min(stats.min_r_t, response_time)
-            stats.max_r_t = max(stats.max_r_t, response_time)
+            self._update_response_time_stats(stats, response_time)
     
     def record_error(self, cache_id: str, error: Exception):
         """记录缓存错误"""
