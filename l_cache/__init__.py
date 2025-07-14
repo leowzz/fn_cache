@@ -124,6 +124,6 @@ __all__ = [
     "MessagePackSerializer",
 ]
 
-__version__ = "2.0.0"
-__author__ = "WangZhanze <wangzhanze@huoban.ai>"
+__version__ = "0.1.0"
+__author__ = "WangZhanze <leolswq@163.com>"
 __description__ = "轻量级通用缓存库"
