@@ -216,3 +216,48 @@ class UniversalCacheManager:
         if self.config.storage_type != StorageType.MEMORY:
             return False
         return isinstance(self._storage, MemoryCacheStorage) and self._storage.is_enabled
+
+    async def clear(self) -> bool:
+        """
+        清除所有缓存（异步版本）
+        
+        :return: 是否成功
+        """
+        try:
+            if self.config.storage_type == StorageType.MEMORY:
+                # 对于内存存储，直接清除缓存
+                if hasattr(self._storage, 'clear'):
+                    await self._storage.clear()
+                else:
+                    # 如果没有clear方法，通过版本控制来清除
+                    await self.increment_global_version()
+            else:
+                # 对于Redis存储，通过版本控制来清除
+                await self.increment_global_version()
+            return True
+        except Exception as e:
+            logger.error(f"Error clearing cache: {e}")
+            return False
+
+    def clear_sync(self) -> bool:
+        """
+        清除所有缓存（同步版本，仅支持内存存储）
+        
+        :return: 是否成功
+        """
+        if self.config.storage_type != StorageType.MEMORY:
+            raise ValueError("Sync clear operations are only supported for memory storage")
+        
+        try:
+            if hasattr(self._storage, 'clear_sync'):
+                self._storage.clear_sync()
+            elif hasattr(self._storage, 'clear'):
+                # 如果只有异步clear方法，在同步环境中无法使用
+                raise ValueError("Memory storage does not support sync clear operation")
+            else:
+                # 通过版本控制来清除
+                self._global_version += 1
+            return True
+        except Exception as e:
+            logger.error(f"Error clearing cache: {e}")
+            return False

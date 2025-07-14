@@ -10,8 +10,8 @@ from unittest.mock import Mock, patch, AsyncMock
 
 from l_cache import (
     UniversalCacheManager, CacheConfig, CacheType, StorageType,
-    u_l_cache, u_l_cache, CacheKeyEnum, invalidate_all_caches,
-    invalidate_user_cache, preload_all_caches
+    u_l_cache, CacheKeyEnum, invalidate_all_caches,
+    preload_all_caches
 )
 
 
@@ -55,29 +55,7 @@ class TestEndToEndCaching:
         value = await manager.get("test_key")
         assert value is None
 
-    @pytest.mark.asyncio
-    async def test_user_level_caching_workflow(self):
-        """测试用户级别缓存工作流程"""
-        manager = UniversalCacheManager(CacheConfig())
-        
-        # 为用户设置缓存
-        await manager.set("user_data", "user_value", ttl_seconds=60, user_id="123")
-        await manager.set("global_data", "global_value", ttl_seconds=60)
-        
-        # 验证缓存存在
-        user_value = await manager.get("user_data", user_id="123")
-        global_value = await manager.get("global_data")
-        assert user_value == "user_value"
-        assert global_value == "global_value"
-        
-        # 递增用户版本
-        await manager.increment_user_version("123")
-        
-        # 验证用户缓存失效，全局缓存仍然存在
-        user_value = await manager.get("user_data", user_id="123")
-        global_value = await manager.get("global_data")
-        assert user_value is None
-        assert global_value == "global_value"
+
 
     @pytest.mark.asyncio
     async def test_lru_cache_workflow(self):
@@ -111,24 +89,17 @@ class TestEndToEndCaching:
         # 设置多个缓存
         await manager.set("key1", "value1", ttl_seconds=60)
         await manager.set("key2", "value2", ttl_seconds=60)
-        await manager.set("user_key", "user_value", ttl_seconds=60, user_id="123")
         
         # 验证缓存存在
         assert await manager.get("key1") == "value1"
         assert await manager.get("key2") == "value2"
-        assert await manager.get("user_key", user_id="123") == "user_value"
         
-        # 使全局缓存失效（不影响用户级别缓存）
+        # 使全局缓存失效
         await manager.invalidate_all()
         
-        # 验证全局缓存失效，但用户级别缓存仍然存在
+        # 验证全局缓存失效
         assert await manager.get("key1") is None
         assert await manager.get("key2") is None
-        assert await manager.get("user_key", user_id="123") == "user_value"  # 用户缓存不受影响
-        
-        # 使用户缓存失效
-        await manager.invalidate_user_cache("123")
-        assert await manager.get("user_key", user_id="123") is None
 
 
 class TestDecoratorIntegration:
@@ -182,62 +153,9 @@ class TestDecoratorIntegration:
         assert result2 == "async_result_test1_default"
         assert call_count == 1
 
-    def test_u_l_cache_integration(self):
-        """测试u_l_cache装饰器集成"""
-        call_count = 0
-        
-        @u_l_cache(
-            cache_key_enum=CacheKeyEnum.USER_PROFILE,
-            key_params=["user_id"],
-            storage_type=StorageType.MEMORY
-        )
-        def get_user_profile(user_id: int):
-            nonlocal call_count
-            call_count += 1
-            return {"user_id": user_id, "name": f"User{user_id}", "email": f"user{user_id}@example.com"}
-        
-        # 第一次调用
-        result1 = get_user_profile(123)
-        assert result1["user_id"] == 123
-        assert result1["name"] == "User123"
-        assert call_count == 1
-        
-        # 第二次调用（应该从缓存返回）
-        result2 = get_user_profile(123)
-        assert result2["user_id"] == 123
-        assert call_count == 1
-        
-        # 不同用户应该重新调用
-        result3 = get_user_profile(456)
-        assert result3["user_id"] == 456
-        assert call_count == 2
 
-    @pytest.mark.asyncio
-    async def test_u_l_cache_async_integration(self):
-        """测试u_l_cache异步装饰器集成"""
-        call_count = 0
-        
-        @u_l_cache(
-            cache_key_enum=CacheKeyEnum.USER_PREFERENCES,
-            key_params=["user_id"],
-            storage_type=StorageType.MEMORY
-        )
-        async def get_user_preferences(user_id: int):
-            nonlocal call_count
-            call_count += 1
-            await asyncio.sleep(0.1)
-            return {"user_id": user_id, "theme": "dark", "language": "zh"}
-        
-        # 第一次调用
-        result1 = await get_user_preferences(123)
-        assert result1["user_id"] == 123
-        assert result1["theme"] == "dark"
-        assert call_count == 1
-        
-        # 第二次调用（应该从缓存返回）
-        result2 = await get_user_preferences(123)
-        assert result2["user_id"] == 123
-        assert call_count == 1
+
+
 
     def test_decorator_with_complex_data(self):
         """测试装饰器与复杂数据"""
@@ -339,36 +257,7 @@ class TestConcurrentOperations:
         # 应该只调用一次函数
         assert call_count == 1
 
-    @pytest.mark.asyncio
-    async def test_concurrent_user_cache_operations(self):
-        """测试并发用户缓存操作"""
-        call_count = 0
-        
-        @u_l_cache(
-            cache_key_enum=CacheKeyEnum.USER_PROFILE,
-            key_params=["user_id"],
-            storage_type=StorageType.MEMORY
-        )
-        async def get_user_profile(user_id: int):
-            nonlocal call_count
-            call_count += 1
-            await asyncio.sleep(0.1)
-            return {"user_id": user_id, "name": f"User{user_id}"}
-        
-        # 并发调用不同用户
-        tasks = [
-            get_user_profile(user_id)
-            for user_id in range(5)
-        ]
-        results = await asyncio.gather(*tasks)
-        
-        # 验证所有调用都成功
-        for i, result in enumerate(results):
-            assert result["user_id"] == i
-            assert result["name"] == f"User{i}"
-        
-        # 应该调用5次（每个用户一次）
-        assert call_count == 5
+
 
     @pytest.mark.asyncio
     async def test_concurrent_version_increments(self):
@@ -378,24 +267,12 @@ class TestConcurrentOperations:
         async def increment_global():
             return await manager.increment_global_version()
         
-        async def increment_user(user_id):
-            return await manager.increment_user_version(user_id)
-        
-        # 并发递增版本
-        tasks = [
-            increment_global(),
-            increment_user("user1"),
-            increment_user("user2"),
-            increment_global(),
-            increment_user("user1")
-        ]
-        
+        # 并发递增全局版本
+        tasks = [increment_global() for _ in range(5)]
         results = await asyncio.gather(*tasks)
         
         # 验证版本递增成功
-        assert manager._global_version >= 2
-        assert manager._user_versions["user1"] >= 2
-        assert manager._user_versions["user2"] >= 1
+        assert manager._global_version >= 5
 
 
 class TestErrorHandling:
@@ -548,34 +425,7 @@ class TestPerformance:
 class TestRealWorldScenarios:
     """真实场景测试类"""
 
-    def test_user_session_caching(self):
-        """测试用户会话缓存场景"""
-        call_count = 0
-        
-        @u_l_cache(
-            cache_key_enum=CacheKeyEnum.USER_PROFILE,
-            key_params=["user_id"],
-            storage_type=StorageType.MEMORY
-        )
-        def get_user_session(user_id: int):
-            nonlocal call_count
-            call_count += 1
-            # 模拟从数据库获取用户会话信息
-            return {
-                "user_id": user_id,
-                "session_id": f"session_{user_id}",
-                "last_login": "2024-01-01T00:00:00Z",
-                "permissions": ["read", "write", "admin"]
-            }
-        
-        # 模拟用户多次访问
-        for _ in range(10):
-            result = get_user_session(123)
-            assert result["user_id"] == 123
-            assert result["session_id"] == "session_123"
-        
-        # 应该只调用一次函数
-        assert call_count == 1
+
 
     def test_product_catalog_caching(self):
         """测试产品目录缓存场景"""

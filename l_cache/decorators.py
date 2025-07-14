@@ -393,8 +393,7 @@ cache_registry = _CacheRegistry()
 class u_l_cache:
     """
     通用轻量缓存装饰器类(Universal Light Cache)，支持丰富的配置选项和缓存预加载。
-    支持用户级别缓存和缓存键枚举。
-    支持自定义唯一标识符函数（如多租户、环境隔离等）。
+    支持自定义缓存键生成器，参考 aiocache 的设计模式。
     """
 
     def __init__(
@@ -404,20 +403,25 @@ class u_l_cache:
         ttl_seconds: int = 60 * 10,  # 默认10分钟失效一次
         max_size: int = 1000,
         key_func: Optional[Callable] = None,
-        key_params: Optional[list[str]] = None,
         prefix: str = DEFAULT_PREFIX,
         preload_provider: Optional[Callable[[], Iterable[tuple[tuple, dict]]]] = None,
         serializer_type: Optional[SerializerType] = None,
         serializer_kwargs: Optional[dict] = None,
-        # 用户级别缓存相关参数
-        cache_key_enum: Optional[CacheKeyEnum] = None,
-        user_id_param: str = "user_id",
         make_expire_sec_func: Optional[Callable] = None,
-        # 新增唯一标识符函数
-        cache_key_builder: Optional[Callable[[], str]] = None,
     ):
         """
-        :param unique_sign_func: 自定义唯一标识符函数，返回字符串，用于缓存 key 隔离（如多租户、环境等）
+        初始化缓存装饰器
+        
+        :param cache_type: 缓存类型 (TTL 或 LRU)
+        :param storage_type: 存储类型 (MEMORY 或 REDIS)
+        :param ttl_seconds: TTL缓存过期时间（秒）
+        :param max_size: 最大缓存条目数
+        :param key_func: 自定义缓存键生成函数，接收函数参数并返回缓存键字符串
+        :param prefix: 缓存键前缀
+        :param preload_provider: 预加载数据提供者
+        :param serializer_type: 序列化类型
+        :param serializer_kwargs: 序列化参数
+        :param make_expire_sec_func: 动态过期时间计算函数
         """
         self.config = CacheConfig(
             cache_type=cache_type,
@@ -429,18 +433,11 @@ class u_l_cache:
             serializer_kwargs=serializer_kwargs or {},
         )
         self.key_func = key_func
-        self.key_params = key_params
         self.preload_provider = preload_provider
+        self.make_expire_sec_func = make_expire_sec_func
         self.cache_manager = UniversalCacheManager(self.config)
         self._locks = {}  # key: threading.Lock or asyncio.Lock
         self._locks_lock = threading.Lock()
-
-        # 用户级别缓存相关属性
-        self.cache_key_enum = cache_key_enum
-        self.user_id_param = user_id_param
-        self.make_expire_sec_func = make_expire_sec_func
-        # 唯一标识符函数
-        self.cache_key_builder = cache_key_builder
 
     def _get_lock(self, cache_key: str, is_async: bool):
         """
@@ -459,60 +456,23 @@ class u_l_cache:
 
     def _build_cache_key(
         self, func: Callable, args: tuple, kwargs: dict
-    ) -> tuple[str, Optional[str], bool]:
+    ) -> str:
         """
         构建缓存键
-        返回: (cache_key, user_id, is_user_cache)
+        
+        :param func: 被装饰的函数
+        :param args: 位置参数
+        :param kwargs: 关键字参数
+        :return: 缓存键字符串
         """
-        # 如果使用缓存键枚举，按用户级别缓存逻辑处理
-        if self.cache_key_enum:
-            sig = inspect.signature(func)
-            bound_args = sig.bind_partial(*args, **kwargs)
-            bound_args.apply_defaults()
-            key_values = {}
-            for param in self.key_params or []:
-                if param in bound_args.arguments:
-                    key_values[param] = bound_args.arguments[param]
-            # 兼容无key_params时的情况
-            try:
-                cache_key = self.cache_key_enum.format(**key_values)
-            except KeyError:
-                cache_key = self.cache_key_enum.value
-            user_id = (
-                key_values.get(self.user_id_param)
-                or kwargs.get(self.user_id_param)
-                or None
-            )
-            is_user_cache = self.user_id_param in key_values
-            return cache_key, user_id, is_user_cache
-
-        # 原有的缓存键构建逻辑
         if self.key_func:
-            cache_key = self.key_func(*args, **kwargs)
+            # 使用自定义缓存键生成函数
+            return self.key_func(*args, **kwargs)
         else:
+            # 默认缓存键生成逻辑：模块名.函数名:参数哈希
             cache_key = f"{func.__module__}.{func.__name__}"
-            if self.key_params:
-                sig = inspect.signature(func)
-                bound_args = sig.bind(*args, **kwargs)
-                bound_args.apply_defaults()
-
-                key_values = [
-                    f"{param}={bound_args.arguments[param]}"
-                    for param in self.key_params
-                    if param in bound_args.arguments
-                ]
-                if key_values:
-                    cache_key += ":" + ":".join(key_values)
-                else:
-                    cache_key += f":{hash(strify((args, kwargs)))}"
-            else:
-                cache_key += f":{hash(strify((args, kwargs)))}"
-            # 唯一标识符部分
-            if self.cache_key_builder:
-                unique_sign = self.cache_key_builder()
-                cache_key = f"{cache_key}:{unique_sign[:8]}"
-
-        return cache_key, None, False
+            cache_key += f":{hash(strify((args, kwargs)))}"
+            return cache_key
 
     def _parse_cached_value(self, cached_value: Any) -> Any:
         """解析缓存值"""
@@ -529,7 +489,7 @@ class u_l_cache:
         return cached_value
 
     def __call__(self, func: Callable) -> Callable:
-        """返回包装后的函数"""
+        """返回包装后的函数，参考 aiocache 的设计模式"""
         # 自动注册缓存管理器到内存监控系统
         manager_id = f"{self.cache_manager.config.storage_type.value}_{self.cache_manager.config.prefix}_{id(self.cache_manager)}"
         cache_registry.register_manager(self.cache_manager, manager_id)
@@ -541,7 +501,7 @@ class u_l_cache:
                     "manager": self.cache_manager,
                     "key_builder": lambda *args, **kwargs: self._build_cache_key(
                         func, args, kwargs
-                    )[0],
+                    ),
                     "preload_provider": self.preload_provider,
                     "ttl_seconds": self.config.ttl_seconds,
                 }
@@ -549,7 +509,7 @@ class u_l_cache:
 
         if asyncio.iscoroutinefunction(func):
             @wraps(func)
-            async def async_wrapper(*args, **kwargs) -> Any:
+            async def wrapper(*args, **kwargs) -> Any:
                 # 剥离控制参数，避免参与key构建
                 cache_read = kwargs.pop('cache_read', True)
                 cache_write = kwargs.pop('cache_write', True)
@@ -561,11 +521,13 @@ class u_l_cache:
                     wait_for_write=wait_for_write,
                     **kwargs
                 )
-            async_wrapper.cache = self.cache_manager
-            return async_wrapper
+            
+            # 将缓存管理器复制给装饰后的函数，便于后续调用 .cache.clear() 等方法
+            wrapper.cache = self.cache_manager
+            return wrapper
         else:
             @wraps(func)
-            def sync_wrapper(*args, **kwargs) -> Any:
+            def wrapper(*args, **kwargs) -> Any:
                 # 剥离控制参数，避免参与key构建
                 cache_read = kwargs.pop('cache_read', True)
                 cache_write = kwargs.pop('cache_write', True)
@@ -575,8 +537,10 @@ class u_l_cache:
                     cache_write=cache_write,
                     **kwargs
                 )
-            sync_wrapper.cache = self.cache_manager
-            return sync_wrapper
+            
+            # 将缓存管理器复制给装饰后的函数，便于后续调用 .cache.clear() 等方法
+            wrapper.cache = self.cache_manager
+            return wrapper
 
     async def decorator(
         self,
@@ -599,7 +563,7 @@ class u_l_cache:
         :return: 函数执行结果
         """
         start_time = time.perf_counter()
-        cache_key, user_id, is_user_cache = self._build_cache_key(func, args, kwargs)
+        cache_key = self._build_cache_key(func, args, kwargs)
         lock = self._get_lock(cache_key, is_async=True)
 
         # 如果有锁，整个操作都在锁保护下进行
@@ -607,7 +571,7 @@ class u_l_cache:
             async with lock:
                 # 缓存读取逻辑
                 if cache_read:
-                    cached = await self.cache_manager.get(cache_key, user_id=user_id)
+                    cached = await self.cache_manager.get(cache_key)
                     if cached is not None:
                         elapsed = time.perf_counter() - start_time
                         logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
@@ -624,15 +588,11 @@ class u_l_cache:
                         ttl_seconds = self.make_expire_sec_func(result) or ttl_seconds
                     
                     if wait_for_write:
-                        await self.cache_manager.set(
-                            cache_key, result, ttl_seconds, user_id=user_id
-                        )
+                        await self.cache_manager.set(cache_key, result, ttl_seconds)
                     else:
                         # 异步写入，不等待完成
                         asyncio.create_task(
-                            self.cache_manager.set(
-                                cache_key, result, ttl_seconds, user_id=user_id
-                            )
+                            self.cache_manager.set(cache_key, result, ttl_seconds)
                         )
 
                 elapsed = time.perf_counter() - start_time
@@ -642,7 +602,7 @@ class u_l_cache:
             # 无锁情况下的逻辑
             # 缓存读取逻辑
             if cache_read:
-                cached = await self.cache_manager.get(cache_key, user_id=user_id)
+                cached = await self.cache_manager.get(cache_key)
                 if cached is not None:
                     elapsed = time.perf_counter() - start_time
                     logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
@@ -659,15 +619,11 @@ class u_l_cache:
                     ttl_seconds = self.make_expire_sec_func(result) or ttl_seconds
                 
                 if wait_for_write:
-                    await self.cache_manager.set(
-                        cache_key, result, ttl_seconds, user_id=user_id
-                    )
+                    await self.cache_manager.set(cache_key, result, ttl_seconds)
                 else:
                     # 异步写入，不等待完成
                     asyncio.create_task(
-                        self.cache_manager.set(
-                            cache_key, result, ttl_seconds, user_id=user_id
-                        )
+                        self.cache_manager.set(cache_key, result, ttl_seconds)
                     )
 
             elapsed = time.perf_counter() - start_time
@@ -693,7 +649,7 @@ class u_l_cache:
         :return: 函数执行结果
         """
         start_time = time.perf_counter()
-        cache_key, user_id, is_user_cache = self._build_cache_key(func, args, kwargs)
+        cache_key = self._build_cache_key(func, args, kwargs)
         lock = self._get_lock(cache_key, is_async=False)
 
         # 如果有锁，整个操作都在锁保护下进行
@@ -701,7 +657,7 @@ class u_l_cache:
             with lock:
                 # 缓存读取逻辑
                 if cache_read:
-                    cached = self._get_from_cache_sync(cache_key, user_id)
+                    cached = self._get_from_cache_sync(cache_key)
                     if cached is not None:
                         elapsed = time.perf_counter() - start_time
                         logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
@@ -717,7 +673,7 @@ class u_l_cache:
                     if self.make_expire_sec_func:
                         ttl_seconds = self.make_expire_sec_func(result) or ttl_seconds
                     
-                    self._set_to_cache_sync(cache_key, result, ttl_seconds, user_id)
+                    self._set_to_cache_sync(cache_key, result, ttl_seconds)
 
                 elapsed = time.perf_counter() - start_time
                 logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
@@ -726,7 +682,7 @@ class u_l_cache:
             # 无锁情况下的逻辑
             # 缓存读取逻辑
             if cache_read:
-                cached = self._get_from_cache_sync(cache_key, user_id)
+                cached = self._get_from_cache_sync(cache_key)
                 if cached is not None:
                     elapsed = time.perf_counter() - start_time
                     logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
@@ -742,7 +698,7 @@ class u_l_cache:
                 if self.make_expire_sec_func:
                     ttl_seconds = self.make_expire_sec_func(result) or ttl_seconds
                 
-                self._set_to_cache_sync(cache_key, result, ttl_seconds, user_id)
+                self._set_to_cache_sync(cache_key, result, ttl_seconds)
 
             elapsed = time.perf_counter() - start_time
             logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
@@ -750,44 +706,26 @@ class u_l_cache:
 
 
 
-    def _get_from_cache_sync(
-        self, cache_key: str, user_id: Optional[str]
-    ) -> Optional[Any]:
+    def _get_from_cache_sync(self, cache_key: str) -> Optional[Any]:
         """同步获取缓存"""
         try:
-            return self.cache_manager.get_sync(cache_key, user_id=user_id)
+            return self.cache_manager.get_sync(cache_key)
         except ValueError:
             logger.debug(
                 f"Cache-skip: {cache_key} (Redis storage not supported for sync operations)"
             )
             return None
 
-    def _set_to_cache_sync(
-        self, cache_key: str, result: Any, ttl_seconds: int, user_id: Optional[str]
-    ):
+    def _set_to_cache_sync(self, cache_key: str, result: Any, ttl_seconds: int):
         """同步设置缓存"""
         try:
-            self.cache_manager.set_sync(cache_key, result, ttl_seconds, user_id=user_id)
+            self.cache_manager.set_sync(cache_key, result, ttl_seconds)
         except ValueError:
             logger.warning(
                 f"Cache-set-skip: {cache_key} (Redis storage not supported for sync operations)"
             )
 
-    @staticmethod
-    async def invalidate_cache(
-        user_id: str,
-        cache_key_enum: CacheKeyEnum,
-        key_params: Optional[dict] = None,
-        prefix: str = DEFAULT_PREFIX,
-        storage_type: StorageType = StorageType.REDIS,
-    ):
-        """失效指定用户的指定缓存"""
-        config = CacheConfig(storage_type=storage_type, prefix=prefix)
-        manager = UniversalCacheManager(config)
 
-        key_params = key_params or {}
-        cache_key = cache_key_enum.format(**key_params)
-        await manager.delete(cache_key, user_id=user_id)
 
 
 async def preload_all_caches():
@@ -801,23 +739,7 @@ async def invalidate_all_caches():
     await default_manager.invalidate_all()
 
 
-async def invalidate_user_cache(user_id: str):
-    """使用户的所有缓存失效"""
-    default_manager = UniversalCacheManager()
-    await default_manager.invalidate_user_cache(user_id)
 
-
-async def invalidate_user_key_cache(
-    user_id: str,
-    cache_key_enum: CacheKeyEnum,
-    key_params: Optional[dict] = None,
-    prefix: str = DEFAULT_PREFIX,
-    storage_type: StorageType = StorageType.REDIS,
-):
-    """失效指定用户的指定缓存键"""
-    await u_l_cache.invalidate_cache(
-        user_id, cache_key_enum, key_params, prefix, storage_type
-    )
 
 
 # 内存监控相关函数

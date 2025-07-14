@@ -2,7 +2,7 @@
 L-Cache: 轻量级通用缓存库
 
 这是一个支持多种存储后端（内存、Redis）和缓存策略（LRU、TTL）的通用缓存库。
-提供同步和异步API，支持函数装饰器和直接调用方式。
+提供同步和异步API，支持函数装饰器和直接调用方式，参考 aiocache 的设计模式。
 
 主要特性：
 - 支持内存和Redis两种存储后端
@@ -11,8 +11,7 @@ L-Cache: 轻量级通用缓存库
 - 支持函数装饰器
 - 支持一键失效所有缓存
 - 支持自定义缓存key生成策略
-- 支持用户级别版本控制和缓存失效
-- 支持缓存键枚举和动态过期时间
+- 支持动态过期时间计算
 - 支持缓存预加载功能
 - 支持内存占用监控和定期报告
 - 支持多种序列化格式（JSON、Pickle、MessagePack）
@@ -26,18 +25,22 @@ L-Cache: 轻量级通用缓存库
     def my_function(arg1, arg2):
         return expensive_computation(arg1, arg2)
     
-    # 使用缓存键枚举装饰器
-    class UserCacheKeyEnum(CacheKeyEnum):
-        USER_VIP_INFO = "user:vip:info:{user_id}"
+    # 使用自定义缓存键生成器
+    def custom_key_func(*args, **kwargs):
+        return f"custom:{args[0]}:{kwargs.get('param2', 'default')}"
     
-    @u_l_cache(UserCacheKeyEnum.USER_VIP_INFO, key_params=["user_id"])
-    async def get_user_vip_info(user_id: int):
-        return await fetch_vip_info(user_id)
+    @u_l_cache(key_func=custom_key_func, ttl_seconds=300)
+    async def get_user_info(user_id: int, param2="default"):
+        return await fetch_user_info(user_id)
     
     # 直接使用缓存管理器
     cache_manager = UniversalCacheManager()
     await cache_manager.set("key", "value", ttl_seconds=300)
     value = await cache_manager.get("key")
+    
+    # 通过装饰后的函数访问缓存管理器
+    cached_func = u_l_cache(ttl_seconds=300)(my_function)
+    cached_func.cache.clear()  # 清除该函数的缓存
     
     # 内存监控功能
     start_cache_memory_monitoring(interval_seconds=300)  # 每5分钟监控一次
@@ -51,11 +54,8 @@ L-Cache: 轻量级通用缓存库
 from .config import CacheConfig
 from .decorators import (
     invalidate_all_caches,
-    invalidate_user_cache,
     u_l_cache,
     preload_all_caches,
-    u_l_cache,
-    invalidate_user_key_cache,
     # 内存监控相关
     start_cache_memory_monitoring,
     stop_cache_memory_monitoring,
@@ -95,8 +95,6 @@ __all__ = [
 
     # 工具函数
     "invalidate_all_caches",
-    "invalidate_user_cache",
-    "invalidate_user_key_cache",
     "preload_all_caches",
 
     # redis操作工具

@@ -20,16 +20,10 @@ from enum import Enum
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from l_cache import (
-    u_l_cache, CacheKeyEnum, StorageType, CacheType, SerializerType,
+    u_l_cache, StorageType, CacheType, SerializerType,
     UniversalCacheManager, CacheConfig, get_cache_statistics, reset_cache_statistics,
     start_cache_memory_monitoring, get_cache_memory_usage, preload_all_caches
 )
-
-
-# 测试2: 缓存键枚举
-class CacheKeyEnum(str, Enum):
-    USER_INFO = "test:user:info:{user_id}"
-    USER_STATS = "test:user:stats:{user_id}:{tenant_id}"
 
 
 def test_serializers():
@@ -68,9 +62,14 @@ async def test_user_cache():
     """测试用户级别缓存"""
     print("\n2. 测试用户级别缓存:")
     
+    def user_info_key_func(user_id: int):
+        return f"test:user:info:{user_id}"
+    
+    def user_stats_key_func(user_id: int, tenant_id: str):
+        return f"test:user:stats:{user_id}:{tenant_id}"
+    
     @u_l_cache(
-        cache_key_enum=CacheKeyEnum.USER_INFO,
-        key_params=["user_id"],
+        key_func=user_info_key_func,
         storage_type=StorageType.MEMORY
     )
     async def test_user_cache_func(user_id: int):
@@ -79,8 +78,7 @@ async def test_user_cache():
         return {"user_id": user_id, "vip": user_id % 2 == 0}
 
     @u_l_cache(
-        cache_key_enum=CacheKeyEnum.USER_STATS,
-        key_params=["user_id", "tenant_id"],
+        key_func=user_stats_key_func,
         storage_type=StorageType.MEMORY
     )
     async def test_multi_param_cache_func(user_id: int, tenant_id: str):
@@ -148,9 +146,14 @@ async def test_statistics():
         print(f"Pickle序列化: 获取用户 {user_id} 数据")
         return {"user_id": user_id, "name": f"用户_{user_id}", "type": "pickle"}
 
+    def user_info_key_func(user_id: int):
+        return f"test:user:info:{user_id}"
+    
+    def user_stats_key_func(user_id: int, tenant_id: str):
+        return f"test:user:stats:{user_id}:{tenant_id}"
+    
     @u_l_cache(
-        cache_key_enum=CacheKeyEnum.USER_INFO,
-        key_params=["user_id"],
+        key_func=user_info_key_func,
         storage_type=StorageType.MEMORY
     )
     async def test_user_cache_func(user_id: int):
@@ -159,8 +162,7 @@ async def test_statistics():
         return {"user_id": user_id, "vip": user_id % 2 == 0}
 
     @u_l_cache(
-        cache_key_enum=CacheKeyEnum.USER_STATS,
-        key_params=["user_id", "tenant_id"],
+        key_func=user_stats_key_func,
         storage_type=StorageType.MEMORY
     )
     async def test_multi_param_cache_func(user_id: int, tenant_id: str):
@@ -248,46 +250,146 @@ async def test_preload():
         print(f"从数据库获取用户 {user_id} 姓名")
         return f"用户_{user_id}"
     
-    # 预加载缓存
+    # 执行预热
     await preload_all_caches()
     
-    # 验证预加载结果
-    for i in range(1, 4):
-        result = get_user_name(i)  # 应该直接从缓存返回
-        print(f"用户 {i} 姓名: {result}")
+    # 验证预热结果
+    for user_id in range(1, 4):
+        result = get_user_name(user_id)
+        print(f"预热后获取用户 {user_id}: {result}")
+
+
+# 测试7: 动态TTL
+@pytest.mark.asyncio
+async def test_dynamic_ttl():
+    print("\n=== 测试动态TTL ===")
+    
+    def make_expire_sec_func(result):
+        # 根据结果动态设置TTL
+        if isinstance(result, dict) and result.get("vip"):
+            return 3600  # VIP用户缓存1小时
+        return 300  # 普通用户缓存5分钟
+    
+    @u_l_cache(
+        storage_type=StorageType.MEMORY,
+        make_expire_sec_func=make_expire_sec_func,
+        ttl_seconds=300  # 默认TTL
+    )
+    async def get_user_profile(user_id: int):
+        print(f"获取用户 {user_id} 资料")
+        await asyncio.sleep(0.1)
+        return {"user_id": user_id, "vip": user_id % 2 == 0, "name": f"用户_{user_id}"}
+    
+    # 测试VIP用户（应该缓存1小时）
+    vip_user = await get_user_profile(100)
+    print(f"VIP用户资料: {vip_user}")
+    
+    # 测试普通用户（应该缓存5分钟）
+    normal_user = await get_user_profile(101)
+    print(f"普通用户资料: {normal_user}")
+
+
+# 测试8: 缓存控制
+@pytest.mark.asyncio
+async def test_cache_control():
+    print("\n=== 测试缓存控制 ===")
+    
+    call_count = 0
+    
+    @u_l_cache(
+        storage_type=StorageType.MEMORY,
+        ttl_seconds=300
+    )
+    async def controlled_function(param: str, cache_read: bool = True, cache_write: bool = True):
+        nonlocal call_count
+        call_count += 1
+        print(f"函数被调用: {param} (调用次数: {call_count})")
+        await asyncio.sleep(0.1)
+        return f"结果_{param}"
+    
+    # 正常调用
+    result1 = await controlled_function("test1")
+    print(f"正常调用结果: {result1}")
+    
+    # 禁用缓存读取
+    result2 = await controlled_function("test1", cache_read=False)
+    print(f"禁用缓存读取结果: {result2}")
+    
+    # 禁用缓存写入
+    result3 = await controlled_function("test2", cache_write=False)
+    print(f"禁用缓存写入结果: {result3}")
+    
+    # 再次调用test2，应该重新计算
+    result4 = await controlled_function("test2")
+    print(f"再次调用test2结果: {result4}")
+    
+    print(f"总调用次数: {call_count}")
+
+
+# 测试9: 缓存清理
+@pytest.mark.asyncio
+async def test_cache_cleanup():
+    print("\n=== 测试缓存清理 ===")
+    
+    @u_l_cache(
+        storage_type=StorageType.MEMORY,
+        ttl_seconds=300
+    )
+    async def cleanup_test_function(param: str):
+        print(f"清理测试函数被调用: {param}")
+        await asyncio.sleep(0.1)
+        return f"清理结果_{param}"
+    
+    # 第一次调用
+    result1 = await cleanup_test_function("test")
+    print(f"第一次调用结果: {result1}")
+    
+    # 第二次调用（应该从缓存返回）
+    result2 = await cleanup_test_function("test")
+    print(f"第二次调用结果: {result2}")
+    
+    # 清理缓存
+    await cleanup_test_function.cache.clear()
+    print("缓存已清理")
+    
+    # 第三次调用（应该重新计算）
+    result3 = await cleanup_test_function("test")
+    print(f"清理后调用结果: {result3}")
 
 
 @pytest.mark.asyncio
 async def test_all_features():
-    """运行所有测试"""
-    print("=== L-Cache v2.0 功能测试 ===\n")
+    """测试所有功能"""
+    print("\n=== 开始测试所有功能 ===")
     
-    try:
-        # 测试1: 不同序列化器
-        test_serializers()
-        
-        # 测试2: 用户级别缓存
-        await test_user_cache()
-        
-        # 测试3: 缓存管理器
-        await test_cache_manager()
-        
-        # 测试4: 缓存统计
-        await test_statistics()
-        
-        # 测试5: 内存监控
-        await test_memory_monitoring()
-        
-        # 测试6: 缓存预热
-        await test_preload()
-        
-        print("\n=== 所有测试通过 ===")
-        
-    except Exception as e:
-        print(f"\n测试失败: {e}")
-        import traceback
-        traceback.print_exc()
-        raise
+    # 测试序列化器
+    test_serializers()
+    
+    # 测试用户缓存
+    await test_user_cache()
+    
+    # 测试缓存管理器
+    await test_cache_manager()
+    
+    # 测试缓存统计
+    await test_statistics()
+    
+    # 测试内存监控
+    await test_memory_monitoring()
+    
+    # 测试缓存预热
+    await test_preload()
+    
+    # 测试动态TTL
+    await test_dynamic_ttl()
+    
+    # 测试缓存控制
+    await test_cache_control()
+    
+    # 测试缓存清理
+    await test_cache_cleanup()
+    
+    print("\n=== 所有功能测试完成 ===")
 
 
 if __name__ == "__main__":

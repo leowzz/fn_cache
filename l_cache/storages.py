@@ -211,6 +211,24 @@ class MemoryCacheStorage(CacheStorage):
         except Exception:
             return False
 
+    async def clear(self) -> bool:
+        """异步清除所有缓存"""
+        try:
+            self._cache.clear()
+            return True
+        except Exception as e:
+            logger.error(f"Error clearing memory cache: {e}")
+            return False
+
+    def clear_sync(self) -> bool:
+        """同步清除所有缓存"""
+        try:
+            self._cache.clear()
+            return True
+        except Exception as e:
+            logger.error(f"Error clearing memory cache: {e}")
+            return False
+
 
 class RedisCacheStorage(CacheStorage):
     """Redis缓存存储实现"""

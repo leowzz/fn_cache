@@ -158,35 +158,7 @@ class TestDecoratorPattern:
         
         asyncio.run(run_test())
 
-    def test_cache_key_enum(self):
-        """测试缓存键枚举"""
-        # 使用现有的CacheKeyEnum
-        call_count = 0
-        
-        @u_l_cache(
-            cache_type=CacheType.TTL,
-            storage_type=StorageType.MEMORY,
-            ttl_seconds=60,
-            cache_key_enum=CacheKeyEnum.USER_AVAILABLE_CHARACTER_IDs,
-            key_params=["user_id"]
-        )
-        async def test_func(user_id: int) -> int:
-            nonlocal call_count
-            call_count += 1
-            return user_id * 2
-        
-        async def run_test():
-            # 第一次调用
-            result1 = await test_func(5)
-            assert result1 == 10
-            assert call_count == 1
-            
-            # 第二次调用应该从缓存获取
-            result2 = await test_func(5)
-            assert result2 == 10
-            assert call_count == 1
-        
-        asyncio.run(run_test())
+
 
     def test_decorator_attributes(self):
         """测试装饰器属性"""
@@ -233,36 +205,7 @@ class TestDecoratorPattern:
         
         asyncio.run(run_test())
 
-    def test_cache_key_builder(self):
-        """测试缓存键构建器"""
-        call_count = 0
-        
-        def cache_key_builder() -> str:
-            return "test_environment"
-        
-        @u_l_cache(
-            cache_type=CacheType.TTL,
-            storage_type=StorageType.MEMORY,
-            ttl_seconds=60,
-            cache_key_builder=cache_key_builder
-        )
-        async def test_func(x: int) -> int:
-            nonlocal call_count
-            call_count += 1
-            return x * 2
-        
-        async def run_test():
-            # 第一次调用
-            result1 = await test_func(5)
-            assert result1 == 10
-            assert call_count == 1
-            
-            # 第二次调用应该从缓存获取
-            result2 = await test_func(5)
-            assert result2 == 10
-            assert call_count == 1
-        
-        asyncio.run(run_test())
+
 
 
 if __name__ == "__main__":

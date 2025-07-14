@@ -156,34 +156,7 @@ class TestBasicFunctionality:
         assert result2 == "async_result_test"
         assert call_count == 1  # 调用次数不应该增加
     
-    def test_u_l_cache_decorator(self):
-        """测试 u_l_cache 用户级别缓存装饰器"""
-        call_count = 0
-        
-        @u_l_cache(
-            cache_key_enum=CacheKeyEnum.USER_KEY,
-            key_params=["user_id"],
-            storage_type=StorageType.MEMORY
-        )
-        def get_user_data(user_id: int):
-            nonlocal call_count
-            call_count += 1
-            return {"user_id": user_id, "data": "user_data"}
-        
-        # 第一次调用
-        result1 = get_user_data(123)
-        assert result1["user_id"] == 123
-        assert call_count == 1
-        
-        # 第二次调用（应该从缓存返回）
-        result2 = get_user_data(123)
-        assert result2["user_id"] == 123
-        assert call_count == 1  # 调用次数不应该增加
-        
-        # 不同用户ID应该重新调用
-        result3 = get_user_data(456)
-        assert result3["user_id"] == 456
-        assert call_count == 2  # 调用次数应该增加
+
 
 
 
