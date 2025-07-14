@@ -13,6 +13,14 @@ class StorageType(str, Enum):
     MEMORY = "memory"
 
 
+class SerializerType(str, Enum):
+    """序列化类型枚举"""
+    JSON = "json"  # JSON序列化（默认）
+    PICKLE = "pickle"  # Pickle序列化
+    MESSAGEPACK = "msgpack"  # MessagePack序列化
+    STRING = "string"  # 字符串序列化
+
+
 class CacheKeyEnum(str, Enum):
     """
     缓存键枚举基类

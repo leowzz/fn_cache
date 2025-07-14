@@ -15,6 +15,9 @@ L-Cache: 轻量级通用缓存库
 - 支持缓存键枚举和动态过期时间
 - 支持缓存预加载功能
 - 支持内存占用监控和定期报告
+- 支持多种序列化格式（JSON、Pickle、MessagePack）
+- 支持缓存统计和性能监控
+- 支持缓存预热和批量操作
 
 基本用法:
     
@@ -40,6 +43,9 @@ L-Cache: 轻量级通用缓存库
     start_cache_memory_monitoring(interval_seconds=300)  # 每5分钟监控一次
     memory_usage = get_cache_memory_usage()  # 获取内存使用情况
     summary = get_cache_memory_summary()  # 获取内存使用摘要
+    
+    # 缓存统计
+    stats = get_cache_statistics()  # 获取缓存统计信息
 """
 
 from .config import CacheConfig
@@ -58,11 +64,16 @@ from .decorators import (
     register_cache_manager_for_monitoring,
     unregister_cache_manager_from_monitoring,
     MemoryUsageInfo,
+    # 缓存统计相关
+    get_cache_statistics,
+    reset_cache_statistics,
+    CacheStatistics,
 )
-from .enums import CacheKeyEnum, CacheType, StorageType
+from .enums import CacheKeyEnum, CacheType, StorageType, SerializerType
 from .manager import UniversalCacheManager
 from .storages import CacheStorage, MemoryCacheStorage, RedisCacheStorage
 from .utils import safe_redis_operation, safe_redis_void_operation
+from .utils.serializers import Serializer, JsonSerializer, PickleSerializer, MessagePackSerializer
 
 __all__ = [
     # 管理器和存储
@@ -76,6 +87,7 @@ __all__ = [
     "CacheKeyEnum",
     "CacheType",
     "StorageType",
+    "SerializerType",
 
     # 装饰器
     "u_l_cache",
@@ -99,8 +111,19 @@ __all__ = [
     "register_cache_manager_for_monitoring",
     "unregister_cache_manager_from_monitoring",
     "MemoryUsageInfo",
+    
+    # 缓存统计相关
+    "get_cache_statistics",
+    "reset_cache_statistics",
+    "CacheStatistics",
+    
+    # 序列化器
+    "Serializer",
+    "JsonSerializer",
+    "PickleSerializer",
+    "MessagePackSerializer",
 ]
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __author__ = "WangZhanze <wangzhanze@huoban.ai>"
 __description__ = "轻量级通用缓存库"

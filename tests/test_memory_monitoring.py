@@ -33,8 +33,13 @@ class TestMemoryMonitoring:
         cache_registry._registered_managers.clear()
         cache_registry._preload_able_funcs.clear()
         cache_registry._monitoring_enabled = False
+        # 安全地取消监控任务
         if cache_registry._monitoring_task and not cache_registry._monitoring_task.done():
-            cache_registry._monitoring_task.cancel()
+            try:
+                cache_registry._monitoring_task.cancel()
+            except RuntimeError:
+                # 事件循环已关闭，忽略错误
+                pass
 
     def test_register_manager(self):
         """测试注册缓存管理器"""

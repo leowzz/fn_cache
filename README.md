@@ -1,4 +1,4 @@
-# l_cache: 轻量级通用缓存库
+# l_cache: 轻量级通用缓存库 v2.0
 
 `l_cache` 是一个专为现代 Python 应用设计的轻量级缓存库，提供统一的接口、多种缓存策略和存储后端。无论您需要简单的内存缓存还是分布式 Redis 缓存，`l_cache` 都能轻松应对。
 
@@ -6,12 +6,15 @@
 
 - **多种缓存策略**: 支持 TTL (Time-To-Live) 和 LRU (Least Recently Used) 缓存淘汰策略
 - **灵活的存储后端**: 内置内存和 Redis 两种存储后端，可根据需求轻松切换
+- **多种序列化格式**: 支持 JSON、Pickle、MessagePack 和字符串序列化
 - **版本控制机制**: 通过全局版本号实现一键失效所有缓存，便于调试和管理
 - **用户级别版本控制**: 支持按用户失效缓存，适用于多用户应用场景
 - **缓存键枚举**: 支持定义结构化的缓存键模板，提高代码可维护性
 - **动态过期时间**: 支持根据缓存值动态计算过期时间
 - **强大的装饰器**: 提供 `u_l_cache` 和 `l_user_cache` 装饰器，支持丰富的配置，并与同步/异步函数无缝集成
 - **缓存预加载**: 支持在服务启动时预先加载数据到内存缓存，提升应用初始性能
+- **缓存统计**: 提供详细的缓存性能监控，包括命中率、响应时间等指标
+- **内存监控**: 支持内存占用监控和定期报告
 - **健壮的错误处理**: 内置 Redis 超时和连接错误处理，确保缓存问题不影响核心业务逻辑
 
 ## 🚀 快速上手
@@ -21,8 +24,7 @@
 使用 `u_l_cache` 装饰器，可以轻松为函数添加缓存功能。
 
 ```python
-from app.common.utils.l_cache import u_l_cache
-
+from l_cache import u_l_cache, SerializerType
 
 # 使用内存TTL缓存 (默认)
 @u_l_cache(ttl_seconds=60)
@@ -30,6 +32,14 @@ def get_some_data(user_id: int):
     print("正在执行复杂的数据查询...")
     return f"这是用户 {user_id} 的数据"
 
+# 使用不同序列化器
+@u_l_cache(
+    storage_type='memory',
+    serializer_type=SerializerType.JSON,
+    ttl_seconds=300
+)
+def get_user_profile(user_id: int):
+    return {"user_id": user_id, "name": f"用户_{user_id}"}
 
 # 第一次调用，函数会执行
 get_some_data(123)  # 输出: "正在执行复杂的数据查询..."
@@ -43,14 +53,12 @@ get_some_data(123)  # 无输出
 使用 `l_user_cache` 装饰器，可以基于预定义的缓存键模板进行缓存，支持用户级别版本控制。
 
 ```python
-from app.common.utils.l_cache import l_user_cache, CacheKeyEnum, StorageType
-
+from l_cache import l_user_cache, CacheKeyEnum, StorageType
 
 # 定义缓存键枚举
 class UserCacheKeyEnum(CacheKeyEnum):
     USER_VIP_INFO = "user:vip:info:{user_id}"
     USER_PROFILE = "user:profile:{user_id}:{tenant_id}"
-
 
 # 使用缓存键枚举装饰器
 @l_user_cache(
@@ -89,9 +97,8 @@ async def fetch_user_data(user_id: int):
 对于需要快速响应的内存缓存数据，可以使用预加载功能，在服务启动时就将热点数据加载到缓存中。
 
 ```python
-from app.common.utils.l_cache import u_l_cache, preload_all_caches
+from l_cache import u_l_cache, preload_all_caches
 import asyncio
-
 
 # 1. 定义一个数据提供者函数
 def user_ids_provider():
@@ -99,13 +106,11 @@ def user_ids_provider():
     for user_id in [1, 2, 3]:
         yield (user_id,), {}  # (args, kwargs)
 
-
 # 2. 在装饰器中指定 preload_provider
 @u_l_cache(storage_type='memory', preload_provider=user_ids_provider)
 def get_user_name(user_id: int):
     print(f"从数据库查询用户 {user_id}...")
     return f"用户_{user_id}"
-
 
 # 3. 在应用启动时，调用预加载函数
 async def main():
@@ -115,9 +120,24 @@ async def main():
     print(get_user_name(1))  # 直接输出 "用户_1"
     print(get_user_name(2))  # 直接输出 "用户_2"
 
-
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+### 5. 缓存统计和监控
+
+```python
+from l_cache import get_cache_statistics, start_cache_memory_monitoring
+
+# 启动内存监控
+start_cache_memory_monitoring(interval_seconds=300)  # 每5分钟监控一次
+
+# 获取缓存统计信息
+stats = get_cache_statistics()
+for cache_id, cache_stats in stats.items():
+    print(f"缓存 {cache_id}:")
+    print(f"  命中率: {cache_stats['hit_rate']:.2%}")
+    print(f"  平均响应时间: {cache_stats['avg_response_time']:.4f}s")
 ```
 
 ## 📚 API 参考
@@ -130,11 +150,12 @@ if __name__ == "__main__":
 
 - `cache_type` (`CacheType`): 缓存类型，`CacheType.TTL` (默认) 或 `CacheType.LRU`
 - `storage_type` (`StorageType`): 存储类型，`StorageType.MEMORY` (默认) 或 `StorageType.REDIS`
+- `serializer_type` (`SerializerType`): 序列化类型，`SerializerType.JSON` (默认)、`SerializerType.PICKLE`、`SerializerType.MESSAGEPACK` 或 `SerializerType.STRING`
 - `ttl_seconds` (`int`): TTL 缓存的过期时间（秒），默认为 600
 - `max_size` (`int`): LRU 缓存的最大容量，默认为 1000
 - `key_func` (`Callable`): 自定义缓存键生成函数。接收与被装饰函数相同的参数
 - `key_params` (`list[str]`): 用于自动生成缓存键的参数名列表
-- `prefix` (`str`): 缓存键的前缀，默认为 `"cache:"`
+- `prefix` (`str`): 缓存键的前缀，默认为 `"l_cache:"`
 - `preload_provider` (`Callable`): 一个函数，返回一个可迭代对象，用于缓存预加载。迭代的每个元素都是一个 `(args, kwargs)` 元组
 
 ### `l_user_cache` 装饰器类
@@ -145,6 +166,7 @@ if __name__ == "__main__":
 
 - `cache_key` (`CacheKeyEnum`): 缓存键枚举实例
 - `storage_type` (`StorageType`): 存储类型，默认为 `StorageType.REDIS`
+- `serializer_type` (`SerializerType`): 序列化类型，默认为 `SerializerType.JSON`
 - `make_expire_sec_func` (`Callable`): 动态生成过期时间的函数，接收缓存值作为参数
 - `key_params` (`list[str]`): 需要从函数参数中获取的key参数名列表
 - `prefix` (`str`): 缓存key前缀，默认为 `"l_cache:"`
@@ -187,6 +209,10 @@ class CacheKeyEnum(str, Enum):
 - `preload_all_caches()`: (异步) 执行所有已注册的缓存预加载任务
 - `invalidate_all_caches()`: (异步) 失效所有使用默认管理器的缓存
 - `invalidate_user_cache(user_id)`: (异步) 使用户的所有缓存失效
+- `get_cache_statistics(cache_id=None)`: 获取缓存统计信息
+- `reset_cache_statistics(cache_id=None)`: 重置缓存统计信息
+- `start_cache_memory_monitoring(interval_seconds=300)`: 启动内存监控
+- `get_cache_memory_usage()`: 获取内存使用情况
 
 ## ⚙️ 高级用法
 
@@ -195,7 +221,11 @@ class CacheKeyEnum(str, Enum):
 只需更改 `storage_type` 参数即可。
 
 ```python
-@u_l_cache(storage_type=StorageType.REDIS, ttl_seconds=3600)
+@u_l_cache(
+    storage_type=StorageType.REDIS, 
+    serializer_type=SerializerType.MESSAGEPACK,
+    ttl_seconds=3600
+)
 async def get_shared_data():
     # ... 从数据库或RPC获取数据 ...
     return {"data": "some shared data"}
@@ -242,12 +272,13 @@ def get_document(doc_id: int, user_id: int, tenant_id: str):
 ### 用户级别缓存管理
 
 ```python
-from app.common.utils.l_cache import UniversalCacheManager, CacheConfig, StorageType
+from l_cache import UniversalCacheManager, CacheConfig, StorageType
 
 class UserCacheService:
     def __init__(self):
         config = CacheConfig(
             storage_type=StorageType.REDIS,
+            serializer_type=SerializerType.JSON,
             prefix="user_cache:"
         )
         self.cache = UniversalCacheManager(config)
@@ -303,17 +334,31 @@ async def get_user_profile(user_id: int, tenant_id: str):
 ### CacheConfig 配置类
 
 ```python
-from app.common.utils.l_cache import CacheConfig, CacheType, StorageType
+from l_cache import CacheConfig, CacheType, StorageType, SerializerType
 
 config = CacheConfig(
     cache_type=CacheType.TTL,      # 缓存策略: TTL 或 LRU
     storage_type=StorageType.MEMORY,  # 存储后端: MEMORY 或 REDIS
+    serializer_type=SerializerType.JSON,  # 序列化类型: JSON, PICKLE, MESSAGEPACK, STRING
     ttl_seconds=600,               # TTL 过期时间（秒）
     max_size=1000,                 # LRU 最大容量
     prefix="cache:",               # 缓存键前缀
     global_version_key="l_cache:global:version",  # 全局版本号键
     user_version_key="l_cache:user:version:{user_id}",  # 用户版本号键
-    make_expire_sec_func=None      # 动态过期时间函数
+    make_expire_sec_func=None,     # 动态过期时间函数
+    serializer_kwargs={},          # 序列化器参数
+    enable_statistics=True,        # 是否启用统计
+    enable_memory_monitoring=True, # 是否启用内存监控
+    redis_config={                 # Redis连接配置
+        "host": "localhost",
+        "port": 6379,
+        "db": 0,
+        "decode_responses": True,
+        "socket_timeout": 1.0,
+        "socket_connect_timeout": 1.0,
+        "retry_on_timeout": True,
+        "health_check_interval": 30,
+    }
 )
 ```
 
@@ -326,22 +371,40 @@ config = CacheConfig(
 - **装饰器模式**: `u_l_cache` 和 `l_user_cache` 使用装饰器模式，以非侵入的方式为函数添加缓存逻辑
 - **错误隔离**: 内置 Redis 超时和连接错误处理，确保缓存问题不影响核心业务逻辑
 - **性能优化**: 支持缓存预加载和动态过期时间，提升应用性能
+- **监控统计**: 提供详细的缓存性能监控，帮助优化缓存策略
 
 ## 📝 使用示例
 
-更多详细的使用示例，请参考 `examples.py` 文件，其中包含了：
+更多详细的使用示例，请参考 `examples_v2.py` 文件，其中包含了：
 
-- 基本的装饰器使用
-- 缓存键枚举和用户级别版本控制
+- 不同序列化器的使用
+- 缓存统计和性能监控
+- 内存监控功能
+- 批量操作和缓存预热
+- 用户级别版本控制
 - 直接使用缓存管理器
-- 不同的存储后端配置
-- 自定义key生成策略
-- 缓存预加载功能
-- 全局缓存控制
-- 动态过期时间配置
 
-## 🔍 版本信息
+## 🔄 v2.0 新特性
 
-- **版本**: 1.0.0
-- **作者**: WangZhanze <wangzhanze@huoban.ai>
-- **描述**: 轻量级通用缓存库
+相比 v1.0，v2.0 版本新增了以下特性：
+
+1. **多种序列化格式支持**: 支持 JSON、Pickle、MessagePack 和字符串序列化
+2. **缓存统计功能**: 提供详细的缓存性能监控，包括命中率、响应时间等指标
+3. **更灵活的配置**: 支持序列化器参数、Redis 连接配置等
+4. **更好的错误处理**: 改进的异常处理和日志记录
+5. **性能优化**: 更高效的序列化和反序列化
+6. **监控增强**: 更详细的内存使用监控和统计报告
+
+## 📦 安装
+
+```bash
+pip install l-cache
+```
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## �� 许可证
+
+MIT License

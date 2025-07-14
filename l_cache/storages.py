@@ -6,11 +6,24 @@ from typing import Any, Optional, Dict
 from collections import OrderedDict
 
 from .config import CacheConfig
-from .enums import CacheType, StorageType
+from .enums import CacheType, StorageType, SerializerType
+from .utils.serializers import get_serializer, Serializer
+from .utils.statistics import (
+    record_cache_hit, record_cache_miss, record_cache_set, 
+    record_cache_delete, record_cache_error
+)
 from loguru import logger
 
 class CacheStorage(ABC):
     """缓存存储抽象基类"""
+
+    def __init__(self, config: CacheConfig):
+        self.config = config
+        self.serializer: Serializer = get_serializer(
+            config.serializer_type.value, 
+            **config.serializer_kwargs
+        )
+        self.cache_id = f"{config.storage_type.value}_{config.prefix}"
 
     @abstractmethod
     async def get(self, key: str) -> Optional[Any]:
@@ -42,12 +55,28 @@ class CacheStorage(ABC):
         """同步删除缓存值"""
         pass
 
+    def _serialize(self, value: Any) -> str:
+        """序列化值"""
+        try:
+            return self.serializer.serialize(value)
+        except Exception as e:
+            logger.error(f"Serialization failed: {e}")
+            raise
+
+    def _deserialize(self, value: str) -> Any:
+        """反序列化值"""
+        try:
+            return self.serializer.deserialize(value)
+        except Exception as e:
+            logger.error(f"Deserialization failed: {e}")
+            raise
+
 
 class MemoryCacheStorage(CacheStorage):
     """内存缓存存储实现"""
 
     def __init__(self, config: CacheConfig):
-        self.config = config
+        super().__init__(config)
         self.is_enabled = True
         
         if config.cache_type == CacheType.TTL:
@@ -58,15 +87,47 @@ class MemoryCacheStorage(CacheStorage):
 
     async def get(self, key: str) -> Optional[Any]:
         """异步获取缓存值"""
-        return self.get_sync(key)
+        start_time = time.perf_counter()
+        try:
+            result = self.get_sync(key)
+            response_time = time.perf_counter() - start_time
+            
+            if result is not None:
+                record_cache_hit(self.cache_id, response_time)
+            else:
+                record_cache_miss(self.cache_id, response_time)
+            
+            return result
+        except Exception as e:
+            response_time = time.perf_counter() - start_time
+            record_cache_error(self.cache_id, e)
+            raise
 
     async def set(self, key: str, value: Any, ttl_seconds: int) -> bool:
         """异步设置缓存值"""
-        return self.set_sync(key, value, ttl_seconds)
+        start_time = time.perf_counter()
+        try:
+            result = self.set_sync(key, value, ttl_seconds)
+            response_time = time.perf_counter() - start_time
+            record_cache_set(self.cache_id, response_time)
+            return result
+        except Exception as e:
+            response_time = time.perf_counter() - start_time
+            record_cache_error(self.cache_id, e)
+            raise
 
     async def delete(self, key: str) -> bool:
         """异步删除缓存值"""
-        return self.delete_sync(key)
+        start_time = time.perf_counter()
+        try:
+            result = self.delete_sync(key)
+            response_time = time.perf_counter() - start_time
+            record_cache_delete(self.cache_id, response_time)
+            return result
+        except Exception as e:
+            response_time = time.perf_counter() - start_time
+            record_cache_error(self.cache_id, e)
+            raise
 
     def get_sync(self, key: str) -> Optional[Any]:
         """同步获取缓存值"""
@@ -155,7 +216,7 @@ class RedisCacheStorage(CacheStorage):
     """Redis缓存存储实现"""
 
     def __init__(self, config: CacheConfig):
-        self.config = config
+        super().__init__(config)
         self._redis = None
         self._prefix = config.prefix
 
@@ -164,14 +225,7 @@ class RedisCacheStorage(CacheStorage):
         if self._redis is None:
             try:
                 import redis.asyncio as redis
-                self._redis = redis.Redis(
-                    host='localhost',
-                    port=6379,
-                    db=0,
-                    decode_responses=True,
-                    socket_timeout=1.0,
-                    socket_connect_timeout=1.0
-                )
+                self._redis = redis.Redis(**self.config.redis_config)
             except ImportError:
                 raise ImportError("Redis is required for RedisCacheStorage. Install with: pip install redis")
             except Exception as e:
@@ -181,50 +235,64 @@ class RedisCacheStorage(CacheStorage):
 
     async def get(self, key: str) -> Optional[Any]:
         """异步获取缓存值"""
+        start_time = time.perf_counter()
         try:
             redis_client = await self._get_redis()
             full_key = f"{self._prefix}{key}"
             value = await redis_client.get(full_key)
             
+            response_time = time.perf_counter() - start_time
+            
             if value is None:
+                record_cache_miss(self.cache_id, response_time)
                 return None
 
-            # 尝试解析JSON
+            # 反序列化值
             try:
-                return json.loads(value)
-            except (json.JSONDecodeError, TypeError):
-                return value
+                result = self._deserialize(value)
+                record_cache_hit(self.cache_id, response_time)
+                return result
+            except Exception as e:
+                record_cache_error(self.cache_id, e)
+                return None
         except Exception as e:
-            logger.error(f"Redis get error for key {key}: {e}")
+            response_time = time.perf_counter() - start_time
+            record_cache_error(self.cache_id, e)
             return None
 
     async def set(self, key: str, value: Any, ttl_seconds: int) -> bool:
         """异步设置缓存值"""
+        start_time = time.perf_counter()
         try:
             redis_client = await self._get_redis()
             full_key = f"{self._prefix}{key}"
             
             # 序列化值
-            if isinstance(value, (dict, list, tuple)):
-                serialized_value = json.dumps(value, ensure_ascii=False)
-            else:
-                serialized_value = str(value)
-
+            serialized_value = self._serialize(value)
             await redis_client.setex(full_key, ttl_seconds, serialized_value)
+            
+            response_time = time.perf_counter() - start_time
+            record_cache_set(self.cache_id, response_time)
             return True
         except Exception as e:
-            logger.error(f"Redis set error for key {key}: {e}")
+            response_time = time.perf_counter() - start_time
+            record_cache_error(self.cache_id, e)
             return False
 
     async def delete(self, key: str) -> bool:
         """异步删除缓存值"""
+        start_time = time.perf_counter()
         try:
             redis_client = await self._get_redis()
             full_key = f"{self._prefix}{key}"
             await redis_client.delete(full_key)
+            
+            response_time = time.perf_counter() - start_time
+            record_cache_delete(self.cache_id, response_time)
             return True  # 删除操作总是成功，无论键是否存在
         except Exception as e:
-            logger.error(f"Redis delete error for key {key}: {e}")
+            response_time = time.perf_counter() - start_time
+            record_cache_error(self.cache_id, e)
             return False
 
     def get_sync(self, key: str) -> Optional[Any]:

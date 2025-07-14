@@ -10,9 +10,15 @@ from typing import Any, Callable, Optional, Iterable, AsyncIterable, AsyncGenera
 from pydantic import BaseModel
 
 from .config import CacheConfig, DEFAULT_PREFIX
-from .enums import CacheType, StorageType, CacheKeyEnum
+from .enums import CacheType, StorageType, CacheKeyEnum, SerializerType
 from .manager import UniversalCacheManager
 from .utils import strify
+from .utils.statistics import (
+    get_cache_statistics as _get_cache_statistics,
+    reset_cache_statistics as _reset_cache_statistics,
+    CacheStatistics,
+    record_cache_hit, record_cache_miss, record_cache_set, record_cache_delete, record_cache_error
+)
 from loguru import logger
 
 class MemoryUsageInfo(BaseModel):
@@ -368,16 +374,22 @@ class u_l_cache:
             key_func: Optional[Callable] = None,
             key_params: Optional[list[str]] = None,
             prefix: str = DEFAULT_PREFIX,
-            preload_provider: Optional[Callable[[], Iterable[tuple[tuple, dict]]]] = None
+            preload_provider: Optional[Callable[[], Iterable[tuple[tuple, dict]]]] = None,
+            serializer_type: Optional[SerializerType] = None,
+            serializer_kwargs: Optional[dict] = None,
     ):
         """
         :param preload_provider: 一个函数，返回一个可迭代对象，
                                  用于提供预加载所需的参数，格式为 (args, kwargs) 的元组。
                                  例如: lambda: [((1,), {}), ((2,), {})]
+        :param serializer_type: 序列化类型
+        :param serializer_kwargs: 序列化器参数
         """
         self.config = CacheConfig(
             cache_type=cache_type, storage_type=storage_type,
-            ttl_seconds=ttl_seconds, max_size=max_size, prefix=prefix
+            ttl_seconds=ttl_seconds, max_size=max_size, prefix=prefix,
+            serializer_type=serializer_type or SerializerType.JSON,
+            serializer_kwargs=serializer_kwargs or {},
         )
         self.key_func = key_func
         self.key_params = key_params
@@ -536,7 +548,9 @@ class l_user_cache:
             make_expire_sec_func: Optional[Callable] = None,
             key_params: Optional[list[str]] = None,
             prefix: str = DEFAULT_PREFIX,
-            user_id_param: str = "user_id"
+            user_id_param: str = "user_id",
+            serializer_type: Optional[SerializerType] = None,
+            serializer_kwargs: Optional[dict] = None,
     ):
         self.cache_key = cache_key
         self.storage_type = storage_type
@@ -544,9 +558,12 @@ class l_user_cache:
         self.key_params = key_params if key_params is not None else None
         self.prefix = prefix
         self.user_id_param = user_id_param
-        
-        # 在初始化时创建缓存管理器实例，确保同一个装饰器实例使用同一个管理器
-        config = CacheConfig(storage_type=self.storage_type, prefix=self.prefix)
+        config = CacheConfig(
+            storage_type=self.storage_type,
+            prefix=self.prefix,
+            serializer_type=serializer_type or SerializerType.JSON,
+            serializer_kwargs=serializer_kwargs or {},
+        )
         self.cache_manager = UniversalCacheManager(config)
 
 
@@ -734,3 +751,23 @@ def unregister_cache_manager_from_monitoring(manager_id: str):
     :param manager_id: 管理器ID
     """
     cache_registry.unregister_manager(manager_id)
+
+
+# 缓存统计相关函数
+def get_cache_statistics(cache_id: Optional[str] = None) -> Dict[str, Any]:
+    """
+    获取缓存统计信息
+    
+    :param cache_id: 可选的缓存ID，如果不提供则返回所有缓存的统计信息
+    :return: 缓存统计信息字典
+    """
+    return _get_cache_statistics(cache_id)
+
+
+def reset_cache_statistics(cache_id: Optional[str] = None):
+    """
+    重置缓存统计信息
+    
+    :param cache_id: 可选的缓存ID，如果不提供则重置所有缓存的统计信息
+    """
+    _reset_cache_statistics(cache_id)

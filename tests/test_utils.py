@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import patch
 from l_cache.utils import strify, safe_redis_operation, safe_redis_void_operation
 from l_cache.utils.cache_key import format_cache_key, validate_cache_key
-from l_cache.utils.serializers import jsonify
+from l_cache.utils import jsonify
 import json
 
 
