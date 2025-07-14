@@ -13,7 +13,7 @@ import time
 from typing import Dict, Any
 
 from . import (
-    u_l_cache, l_user_cache, CacheKeyEnum, StorageType, CacheType, SerializerType,
+    u_l_cache, u_l_cache, CacheKeyEnum, StorageType, CacheType, SerializerType,
     UniversalCacheManager, CacheConfig, get_cache_statistics, reset_cache_statistics,
     start_cache_memory_monitoring, get_cache_memory_usage
 )
@@ -70,8 +70,8 @@ class UserCacheKeyEnum(CacheKeyEnum):
     USER_PREFERENCES = "user:preferences:{user_id}"
 
 
-@l_user_cache(
-    cache_key=UserCacheKeyEnum.USER_VIP_INFO,
+@u_l_cache(
+    cache_key_enum=UserCacheKeyEnum.USER_VIP_INFO,
     key_params=["user_id"],
     storage_type=StorageType.REDIS,
     make_expire_sec_func=lambda result: 3600 if result.get("is_vip") else 1800
@@ -90,8 +90,8 @@ async def get_user_vip_info(user_id: int) -> Dict[str, Any]:
     }
 
 
-@l_user_cache(
-    cache_key=UserCacheKeyEnum.USER_PERMISSIONS,
+@u_l_cache(
+    cache_key_enum=UserCacheKeyEnum.USER_PERMISSIONS,
     key_params=["user_id", "tenant_id"],
     storage_type=StorageType.REDIS
 )

@@ -30,7 +30,7 @@ L-Cache: 轻量级通用缓存库
     class UserCacheKeyEnum(CacheKeyEnum):
         USER_VIP_INFO = "user:vip:info:{user_id}"
     
-    @l_user_cache(UserCacheKeyEnum.USER_VIP_INFO, key_params=["user_id"])
+    @u_l_cache(UserCacheKeyEnum.USER_VIP_INFO, key_params=["user_id"])
     async def get_user_vip_info(user_id: int):
         return await fetch_vip_info(user_id)
     
@@ -52,7 +52,7 @@ from .config import CacheConfig
 from .decorators import (
     invalidate_all_caches,
     invalidate_user_cache,
-    l_user_cache,
+    u_l_cache,
     preload_all_caches,
     u_l_cache,
     invalidate_user_key_cache,
@@ -91,7 +91,7 @@ __all__ = [
 
     # 装饰器
     "u_l_cache",
-    "l_user_cache",
+    "u_l_cache",
 
     # 工具函数
     "invalidate_all_caches",

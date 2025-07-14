@@ -13,7 +13,7 @@ from l_cache import (
     CacheType,
     StorageType,
     u_l_cache,
-    l_user_cache,
+
     CacheKeyEnum,
 )
 from l_cache.storages import MemoryCacheStorage
@@ -156,12 +156,12 @@ class TestBasicFunctionality:
         assert result2 == "async_result_test"
         assert call_count == 1  # 调用次数不应该增加
     
-    def test_l_user_cache_decorator(self):
-        """测试 l_user_cache 装饰器"""
+    def test_u_l_cache_decorator(self):
+        """测试 u_l_cache 用户级别缓存装饰器"""
         call_count = 0
         
-        @l_user_cache(
-            cache_key=CacheKeyEnum.USER_KEY,
+        @u_l_cache(
+            cache_key_enum=CacheKeyEnum.USER_KEY,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )

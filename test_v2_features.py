@@ -20,7 +20,7 @@ from enum import Enum
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from l_cache import (
-    u_l_cache, l_user_cache, CacheKeyEnum, StorageType, CacheType, SerializerType,
+    u_l_cache, CacheKeyEnum, StorageType, CacheType, SerializerType,
     UniversalCacheManager, CacheConfig, get_cache_statistics, reset_cache_statistics,
     start_cache_memory_monitoring, get_cache_memory_usage, preload_all_caches
 )
@@ -68,8 +68,8 @@ async def test_user_cache():
     """测试用户级别缓存"""
     print("\n2. 测试用户级别缓存:")
     
-    @l_user_cache(
-        cache_key=CacheKeyEnum.USER_INFO,
+    @u_l_cache(
+        cache_key_enum=CacheKeyEnum.USER_INFO,
         key_params=["user_id"],
         storage_type=StorageType.MEMORY
     )
@@ -78,8 +78,8 @@ async def test_user_cache():
         await asyncio.sleep(0.1)
         return {"user_id": user_id, "vip": user_id % 2 == 0}
 
-    @l_user_cache(
-        cache_key=CacheKeyEnum.USER_STATS,
+    @u_l_cache(
+        cache_key_enum=CacheKeyEnum.USER_STATS,
         key_params=["user_id", "tenant_id"],
         storage_type=StorageType.MEMORY
     )
@@ -148,8 +148,8 @@ async def test_statistics():
         print(f"Pickle序列化: 获取用户 {user_id} 数据")
         return {"user_id": user_id, "name": f"用户_{user_id}", "type": "pickle"}
 
-    @l_user_cache(
-        cache_key=CacheKeyEnum.USER_INFO,
+    @u_l_cache(
+        cache_key_enum=CacheKeyEnum.USER_INFO,
         key_params=["user_id"],
         storage_type=StorageType.MEMORY
     )
@@ -158,8 +158,8 @@ async def test_statistics():
         await asyncio.sleep(0.1)
         return {"user_id": user_id, "vip": user_id % 2 == 0}
 
-    @l_user_cache(
-        cache_key=CacheKeyEnum.USER_STATS,
+    @u_l_cache(
+        cache_key_enum=CacheKeyEnum.USER_STATS,
         key_params=["user_id", "tenant_id"],
         storage_type=StorageType.MEMORY
     )

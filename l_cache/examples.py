@@ -10,7 +10,7 @@ from typing import Dict, List, Any
 
 from . import (
     u_l_cache,
-    l_user_cache,
+    u_l_cache,
     CacheKeyEnum,
     CacheType,
     StorageType,
@@ -115,8 +115,8 @@ def get_document(doc_id: int, user_id: int, tenant_id: str) -> Dict[str, Any]:
 
 
 # 示例7: 用户级别版本控制缓存
-@l_user_cache(
-    cache_key=UserCacheKeyEnum.USER_VIP_INFO,
+@u_l_cache(
+    cache_key_enum=UserCacheKeyEnum.USER_VIP_INFO,
     key_params=["user_id"],
     make_expire_sec_func=lambda result: 3600 if result.get("is_vip") else 1800
 )
@@ -135,8 +135,8 @@ async def get_user_vip_info(user_id: int) -> Dict[str, Any]:
 
 
 # 示例8: 多参数缓存键
-@l_user_cache(
-    cache_key=UserCacheKeyEnum.USER_PROFILE,
+@u_l_cache(
+    cache_key_enum=UserCacheKeyEnum.USER_PROFILE,
     key_params=["user_id", "tenant_id"],
     storage_type=StorageType.REDIS
 )

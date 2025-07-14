@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch, AsyncMock
 
 from l_cache import (
     UniversalCacheManager, CacheConfig, CacheType, StorageType,
-    u_l_cache, l_user_cache, CacheKeyEnum, invalidate_all_caches,
+    u_l_cache, u_l_cache, CacheKeyEnum, invalidate_all_caches,
     invalidate_user_cache, preload_all_caches
 )
 
@@ -182,12 +182,12 @@ class TestDecoratorIntegration:
         assert result2 == "async_result_test1_default"
         assert call_count == 1
 
-    def test_l_user_cache_integration(self):
-        """测试l_user_cache装饰器集成"""
+    def test_u_l_cache_integration(self):
+        """测试u_l_cache装饰器集成"""
         call_count = 0
         
-        @l_user_cache(
-            cache_key=CacheKeyEnum.USER_PROFILE,
+        @u_l_cache(
+            cache_key_enum=CacheKeyEnum.USER_PROFILE,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -213,12 +213,12 @@ class TestDecoratorIntegration:
         assert call_count == 2
 
     @pytest.mark.asyncio
-    async def test_l_user_cache_async_integration(self):
-        """测试l_user_cache异步装饰器集成"""
+    async def test_u_l_cache_async_integration(self):
+        """测试u_l_cache异步装饰器集成"""
         call_count = 0
         
-        @l_user_cache(
-            cache_key=CacheKeyEnum.USER_PREFERENCES,
+        @u_l_cache(
+            cache_key_enum=CacheKeyEnum.USER_PREFERENCES,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -344,8 +344,8 @@ class TestConcurrentOperations:
         """测试并发用户缓存操作"""
         call_count = 0
         
-        @l_user_cache(
-            cache_key=CacheKeyEnum.USER_PROFILE,
+        @u_l_cache(
+            cache_key_enum=CacheKeyEnum.USER_PROFILE,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
@@ -552,8 +552,8 @@ class TestRealWorldScenarios:
         """测试用户会话缓存场景"""
         call_count = 0
         
-        @l_user_cache(
-            cache_key=CacheKeyEnum.USER_PROFILE,
+        @u_l_cache(
+            cache_key_enum=CacheKeyEnum.USER_PROFILE,
             key_params=["user_id"],
             storage_type=StorageType.MEMORY
         )
