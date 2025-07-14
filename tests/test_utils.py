@@ -113,13 +113,13 @@ class TestSafeRedisOperation:
     @pytest.mark.asyncio
     async def test_safe_redis_operation_with_logging(self):
         """测试带日志记录的安全Redis操作"""
-        with patch('builtins.print') as mock_print:
+        with patch('l_cache.utils.safe_oper.logger.error') as mock_logger:
             async def mock_operation():
                 raise Exception("Redis error")
     
             result = await safe_redis_operation(mock_operation(), "test_operation", "test_key")
             assert result is None
-            mock_print.assert_called()
+            mock_logger.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_safe_redis_operation_complex_result(self):
@@ -157,13 +157,13 @@ class TestSafeRedisVoidOperation:
     @pytest.mark.asyncio
     async def test_safe_redis_void_operation_with_logging(self):
         """测试带日志记录的空Redis操作"""
-        with patch('builtins.print') as mock_print:
+        with patch('l_cache.utils.safe_oper.logger.error') as mock_logger:
             async def mock_operation():
                 raise Exception("Redis error")
             
             result = await safe_redis_void_operation(mock_operation(), "test_operation", "test_key")
             assert result is None
-            mock_print.assert_called()
+            mock_logger.assert_called_once()
 
 
 class TestCacheKeyBuilder:

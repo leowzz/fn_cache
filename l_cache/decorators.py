@@ -11,7 +11,7 @@ from .config import CacheConfig, DEFAULT_PREFIX
 from .enums import CacheType, StorageType, CacheKeyEnum
 from .manager import UniversalCacheManager
 from .utils import strify
-
+from loguru import logger
 
 class _CacheRegistry:
     """
@@ -29,7 +29,7 @@ class _CacheRegistry:
         """
         遍历所有已注册的函数，并为内存缓存执行预加载。
         """
-        print("Starting cache preloading...")
+        logger.info("Starting cache preloading...")
         for info in self._preload_able_funcs:
             manager: UniversalCacheManager = info['manager']
 
@@ -53,11 +53,11 @@ class _CacheRegistry:
                         cache_key = key_builder(*args, **kwargs)
                         # set方法会自动使用当前的全局版本号
                         await manager.set(cache_key, result, ttl_seconds)
-                        print(f"Preloaded cache for {cache_key}")
+                        logger.info(f"Preloaded cache for {cache_key}")
 
             except Exception as e:
-                print(f"Failed to preload cache for function {func.__name__}: {e}")
-        print("Cache preloading finished.")
+                logger.error(f"Failed to preload cache for function {func.__name__}: {e}")
+        logger.info("Cache preloading finished.")
 
     @staticmethod
     async def _iterate_params(iterable: Iterable | AsyncIterable) -> AsyncGenerator[Any, Any]:
@@ -181,25 +181,25 @@ class u_l_cache:
                         cached = await self.cache_manager.get(cache_key)
                         if cached is not None:
                             elapsed = time.perf_counter() - start_time
-                            print(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
+                            logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
                             return cached
                         result = await func(*args, **kwargs)
                         if result is not None:
                             await self.cache_manager.set(cache_key, result, self.config.ttl_seconds)
                         elapsed = time.perf_counter() - start_time
-                        print(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
+                        logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
                         return result
                 else:
                     cached = await self.cache_manager.get(cache_key)
                     if cached is not None:
                         elapsed = time.perf_counter() - start_time
-                        print(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
+                        logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
                         return cached
                     result = await func(*args, **kwargs)
                     if result is not None:
                         await self.cache_manager.set(cache_key, result, self.config.ttl_seconds)
                     elapsed = time.perf_counter() - start_time
-                    print(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
+                    logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
                     return result
 
             return async_wrapper
@@ -215,42 +215,42 @@ class u_l_cache:
                         try:
                             cached = self.cache_manager.get_sync(cache_key)
                         except ValueError:
-                            print(f"Cache-skip: {cache_key} (Redis storage not supported for sync operations)")
+                            logger.info(f"Cache-skip: {cache_key} (Redis storage not supported for sync operations)")
                             pass
                         if cached is not None:
                             elapsed = time.perf_counter() - start_time
-                            print(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
+                            logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
                             return cached
                         result = func(*args, **kwargs)
                         if result is not None:
                             try:
                                 self.cache_manager.set_sync(cache_key, result, self.config.ttl_seconds)
                             except ValueError:
-                                print(f"Cache-set-skip: {cache_key} (Redis storage not supported for sync operations)")
+                                logger.warning(f"Cache-set-skip: {cache_key} (Redis storage not supported for sync operations)")
                                 pass
                         elapsed = time.perf_counter() - start_time
-                        print(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
+                        logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
                         return result
                 else:
                     cached = None
                     try:
                         cached = self.cache_manager.get_sync(cache_key)
                     except ValueError:
-                        print(f"Cache-skip: {cache_key} (Redis storage not supported for sync operations)")
+                        logger.warning(f"Cache-skip: {cache_key} (Redis storage not supported for sync operations)")
                         pass
                     if cached is not None:
                         elapsed = time.perf_counter() - start_time
-                        print(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
+                        logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
                         return cached
                     result = func(*args, **kwargs)
                     if result is not None:
                         try:
                             self.cache_manager.set_sync(cache_key, result, self.config.ttl_seconds)
                         except ValueError:
-                            print(f"Cache-set-skip: {cache_key} (Redis storage not supported for sync operations)")
+                            logger.warning(f"Cache-set-skip: {cache_key} (Redis storage not supported for sync operations)")
                             pass
                     elapsed = time.perf_counter() - start_time
-                    print(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
+                    logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
                     return result
             return sync_wrapper
 

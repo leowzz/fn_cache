@@ -8,7 +8,7 @@ from .enums import StorageType, CacheType
 from .storages import CacheStorage, MemoryCacheStorage, RedisCacheStorage
 
 from .utils import strify
-
+from loguru import logger
 
 class UniversalCacheManager:
     """
@@ -46,7 +46,7 @@ class UniversalCacheManager:
             versioned_key = self._build_versioned_key(key, user_id)
             return await self._storage.get(versioned_key)
         except Exception as e:
-            print(f"Error getting cache for key {key}: {e}")
+            logger.error(f"Error getting cache for key {key}: {e}")
             return None
 
     async def set(self, key: str, value: Any, ttl_seconds: Optional[int] = None, user_id: Optional[str] = None) -> bool:
@@ -65,7 +65,7 @@ class UniversalCacheManager:
             ttl = ttl_seconds or self.config.ttl_seconds
             return await self._storage.set(versioned_key, value, ttl)
         except Exception as e:
-            print(f"Error setting cache for key {key}: {e}")
+            logger.error(f"Error setting cache for key {key}: {e}")
             return False
 
     async def delete(self, key: str, user_id: Optional[str] = None) -> bool:
@@ -81,7 +81,7 @@ class UniversalCacheManager:
             versioned_key = self._build_versioned_key(key, user_id)
             return await self._storage.delete(versioned_key)
         except Exception as e:
-            print(f"Error deleting cache for key {key}: {e}")
+            logger.error(f"Error deleting cache for key {key}: {e}")
             return False
 
     def get_sync(self, key: str, user_id: Optional[str] = None) -> Optional[Any]:
@@ -99,7 +99,7 @@ class UniversalCacheManager:
             versioned_key = self._build_versioned_key(key, user_id)
             return self._storage.get_sync(versioned_key)
         except Exception as e:
-            print(f"Error getting cache for key {key}: {e}")
+            logger.error(f"Error getting cache for key {key}: {e}")
             return None
 
     def set_sync(self, key: str, value: Any, ttl_seconds: Optional[int] = None, user_id: Optional[str] = None) -> bool:
@@ -120,7 +120,7 @@ class UniversalCacheManager:
             ttl = ttl_seconds or self.config.ttl_seconds
             return self._storage.set_sync(versioned_key, value, ttl)
         except Exception as e:
-            print(f"Error setting cache for key {key}: {e}")
+            logger.error(f"Error setting cache for key {key}: {e}")
             return False
 
     def delete_sync(self, key: str, user_id: Optional[str] = None) -> bool:
@@ -139,7 +139,7 @@ class UniversalCacheManager:
             versioned_key = self._build_versioned_key(key, user_id)
             return self._storage.delete_sync(versioned_key)
         except Exception as e:
-            print(f"Error deleting cache for key {key}: {e}")
+            logger.error(f"Error deleting cache for key {key}: {e}")
             return False
 
     def _build_versioned_key(self, key: str, user_id: Optional[str] = None) -> str:
@@ -165,7 +165,7 @@ class UniversalCacheManager:
         :return: 新的全局版本号
         """
         self._global_version += 1
-        print(f"Global version incremented to {self._global_version}")
+        logger.info(f"Global version incremented to {self._global_version}")
         return self._global_version
 
     async def increment_user_version(self, user_id: str) -> int:
@@ -176,7 +176,7 @@ class UniversalCacheManager:
         :return: 新的用户版本号
         """
         self._user_versions[user_id] = self._user_versions.get(user_id, 0) + 1
-        print(f"User {user_id} version incremented to {self._user_versions[user_id]}")
+        logger.info(f"User {user_id} version incremented to {self._user_versions[user_id]}")
         return self._user_versions[user_id]
 
     async def invalidate_all(self) -> bool:
@@ -189,7 +189,7 @@ class UniversalCacheManager:
             await self.increment_global_version()
             return True
         except Exception as e:
-            print(f"Error invalidating all caches: {e}")
+            logger.error(f"Error invalidating all caches: {e}")
             return False
 
     async def invalidate_user_cache(self, user_id: str) -> bool:
@@ -203,7 +203,7 @@ class UniversalCacheManager:
             await self.increment_user_version(user_id)
             return True
         except Exception as e:
-            print(f"Error invalidating user cache for {user_id}: {e}")
+            logger.error(f"Error invalidating user cache for {user_id}: {e}")
             return False
 
     @property

@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from .config import CacheConfig
 from .enums import CacheType, StorageType
-
+from loguru import logger
 
 class CacheStorage(ABC):
     """缓存存储抽象基类"""
@@ -175,7 +175,7 @@ class RedisCacheStorage(CacheStorage):
             except ImportError:
                 raise ImportError("Redis is required for RedisCacheStorage. Install with: pip install redis")
             except Exception as e:
-                print(f"Failed to connect to Redis: {e}")
+                logger.error(f"Failed to connect to Redis: {e}")
                 raise
         return self._redis
 
@@ -195,7 +195,7 @@ class RedisCacheStorage(CacheStorage):
             except (json.JSONDecodeError, TypeError):
                 return value
         except Exception as e:
-            print(f"Redis get error for key {key}: {e}")
+            logger.error(f"Redis get error for key {key}: {e}")
             return None
 
     async def set(self, key: str, value: Any, ttl_seconds: int) -> bool:
@@ -213,7 +213,7 @@ class RedisCacheStorage(CacheStorage):
             await redis_client.setex(full_key, ttl_seconds, serialized_value)
             return True
         except Exception as e:
-            print(f"Redis set error for key {key}: {e}")
+            logger.error(f"Redis set error for key {key}: {e}")
             return False
 
     async def delete(self, key: str) -> bool:
@@ -224,7 +224,7 @@ class RedisCacheStorage(CacheStorage):
             await redis_client.delete(full_key)
             return True  # 删除操作总是成功，无论键是否存在
         except Exception as e:
-            print(f"Redis delete error for key {key}: {e}")
+            logger.error(f"Redis delete error for key {key}: {e}")
             return False
 
     def get_sync(self, key: str) -> Optional[Any]:

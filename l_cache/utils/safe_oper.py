@@ -1,6 +1,6 @@
 import asyncio
 from typing import Any, Optional, TypeVar, Awaitable, Callable
-
+from loguru import logger
 T = TypeVar('T')
 
 
@@ -29,10 +29,10 @@ def safe_redis_operation(
             return await asyncio.wait_for(operation, timeout=timeout_seconds)
         except asyncio.TimeoutError:
             if not suppress_timeout_log:
-                print(f"Redis {operation_name} timeout for key: {key}")
+                logger.error(f"Redis {operation_name} timeout for key: {key}")
             return default_value
         except Exception as e:
-            print(f"Redis {operation_name} error for key {key}: {e}")
+            logger.error(f"Redis {operation_name} error for key {key}: {e}")
             return default_value
 
     return wrapper()
@@ -57,9 +57,9 @@ def safe_redis_void_operation(
         try:
             await asyncio.wait_for(operation, timeout=timeout_seconds)
         except asyncio.TimeoutError:
-            print(f"Redis {operation_name} timeout for key: {key}")
+            logger.error(f"Redis {operation_name} timeout for key: {key}")
         except Exception as e:
-            print(f"Redis {operation_name} error for key {key}: {e}")
+            logger.error(f"Redis {operation_name} error for key {key}: {e}")
 
     return wrapper()
 
@@ -80,7 +80,7 @@ def safe_cache_operation(
     try:
         return operation()
     except Exception as e:
-        print(f"Cache {operation_name} error: {e}")
+        logger.error(f"Cache {operation_name} error: {e}")
         return default_value
 
 
@@ -100,5 +100,5 @@ async def safe_async_cache_operation(
     try:
         return await operation()
     except Exception as e:
-        print(f"Cache {operation_name} error: {e}")
+        logger.error(f"Cache {operation_name} error: {e}")
         return default_value

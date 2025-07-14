@@ -1,7 +1,7 @@
 import enum
 import json
 from datetime import datetime
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Any
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
@@ -16,7 +16,7 @@ def jsonify(var, date_fmt: Optional[str] = '%Y-%m-%d %H:%M:%S'):
     })
 
 
-def strify(var: None | enum.Enum | dict | BaseModel | str | list | Iterable) -> str | None:
+def strify(var: None | enum.Enum | Any) -> str | None:
     if var is None:
         return var
     if isinstance(var, enum.Enum):
