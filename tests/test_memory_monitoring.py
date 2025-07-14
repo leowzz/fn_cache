@@ -148,8 +148,8 @@ class TestMemoryMonitoring:
         # 等待任务取消
         await asyncio.sleep(0.1)
 
-    def test_memory_usage_info_dataclass(self):
-        """测试MemoryUsageInfo数据类"""
+    def test_memory_usage_info_pydantic(self):
+        """测试MemoryUsageInfo pydantic模型"""
         info = MemoryUsageInfo(
             manager_id="test_manager",
             storage_type=StorageType.MEMORY,

@@ -1,13 +1,12 @@
-from dataclasses import dataclass
 from typing import Optional, Callable
+from pydantic import BaseModel
 
 from .enums import CacheType, StorageType
 
 # 默认缓存前缀常量
 DEFAULT_PREFIX = "l_cache:"
 
-@dataclass
-class CacheConfig:
+class CacheConfig(BaseModel):
     """
     缓存配置
     

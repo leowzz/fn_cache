@@ -44,9 +44,8 @@ class TestUniversalCacheManager:
 
     def test_create_storage_invalid_type(self):
         """测试创建无效存储类型"""
-        config = CacheConfig(storage_type="INVALID")
-        with pytest.raises(ValueError, match="Unsupported storage type"):
-            UniversalCacheManager(config)
+        with pytest.raises(ValueError, match="Input should be 'redis' or 'memory'"):
+            config = CacheConfig(storage_type="INVALID")
 
     def test_build_versioned_key_global(self):
         """测试构建全局版本键"""

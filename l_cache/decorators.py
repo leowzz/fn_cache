@@ -7,7 +7,7 @@ import threading
 import sys
 from functools import wraps
 from typing import Any, Callable, Optional, Iterable, AsyncIterable, AsyncGenerator, Dict, List
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 from .config import CacheConfig, DEFAULT_PREFIX
 from .enums import CacheType, StorageType, CacheKeyEnum
@@ -15,8 +15,7 @@ from .manager import UniversalCacheManager
 from .utils import strify
 from loguru import logger
 
-@dataclass
-class MemoryUsageInfo:
+class MemoryUsageInfo(BaseModel):
     """内存使用信息"""
     manager_id: str
     storage_type: StorageType
