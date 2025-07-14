@@ -1,0 +1,6 @@
+sphinx>=6.0.0
+sphinx-rtd-theme>=1.2.0
+myst-parser>=1.0.0
+pydantic~=2.10.6
+fastapi>0.100.0,<0.116.0
+loguru~=0.7.3 
