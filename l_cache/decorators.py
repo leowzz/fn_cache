@@ -86,7 +86,7 @@ class _CacheRegistry:
         if manager_id is None:
             manager_id = f"{manager.config.storage_type.value}_{manager.config.prefix}_{id(manager)}"
         self._registered_managers[manager_id] = manager
-        logger.info(f"Registered cache manager for monitoring: {manager_id}")
+        logger.debug(f"Registered cache manager for monitoring: {manager_id}")
 
     def unregister_manager(self, manager_id: str):
         """注销一个缓存管理器"""
@@ -483,14 +483,14 @@ class u_l_cache:
         :param kwargs: 关键字参数
         :return: 缓存键字符串
         """
+        # 默认缓存键生成逻辑：模块名.函数名
+        base_key = f"{func.__module__}.{func.__name__}"
         if self.key_func:
             # 使用自定义缓存键生成函数
-            return self.key_func(*args, **kwargs)
+            add_key = self.key_func(*args, **kwargs)
         else:
-            # 默认缓存键生成逻辑：模块名.函数名:参数哈希
-            cache_key = f"{func.__module__}.{func.__name__}"
-            cache_key += f":{hash(strify((args, kwargs)))}"
-            return cache_key
+            add_key = f":{hash(strify((args, kwargs)))}"
+        return f"{base_key}|{add_key}"
 
     def _parse_cached_value(self, cached_value: Any) -> Any:
         """解析缓存值"""
