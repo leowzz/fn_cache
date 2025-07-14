@@ -87,19 +87,10 @@ class MemoryCacheStorage(CacheStorage):
 
     async def get(self, key: str) -> Optional[Any]:
         """异步获取缓存值"""
-        start_time = time.perf_counter()
         try:
             result = self.get_sync(key)
-            response_time = time.perf_counter() - start_time
-            
-            if result is not None:
-                record_cache_hit(self.cache_id, response_time)
-            else:
-                record_cache_miss(self.cache_id, response_time)
-            
             return result
         except Exception as e:
-            response_time = time.perf_counter() - start_time
             record_cache_error(self.cache_id, e)
             raise
 
@@ -253,28 +244,22 @@ class RedisCacheStorage(CacheStorage):
 
     async def get(self, key: str) -> Optional[Any]:
         """异步获取缓存值"""
-        start_time = time.perf_counter()
         try:
             redis_client = await self._get_redis()
             full_key = f"{self._prefix}{key}"
             value = await redis_client.get(full_key)
             
-            response_time = time.perf_counter() - start_time
-            
             if value is None:
-                record_cache_miss(self.cache_id, response_time)
                 return None
 
             # 反序列化值
             try:
                 result = self._deserialize(value)
-                record_cache_hit(self.cache_id, response_time)
                 return result
             except Exception as e:
                 record_cache_error(self.cache_id, e)
                 return None
         except Exception as e:
-            response_time = time.perf_counter() - start_time
             record_cache_error(self.cache_id, e)
             return None
 

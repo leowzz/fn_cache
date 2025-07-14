@@ -653,6 +653,8 @@ class u_l_cache:
                 if cached is not None:
                     elapsed = time.perf_counter() - start_time
                     logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
+                    # 记录缓存命中统计
+                    record_cache_hit(self.cache_manager._storage.cache_id, elapsed)
                     return self._parse_cached_value(cached)
             # 执行原函数
             result = await func(*args, **kwargs)
@@ -665,6 +667,8 @@ class u_l_cache:
                     asyncio.create_task(self.cache_manager.set(cache_key, result, ttl_seconds))
             elapsed = time.perf_counter() - start_time
             logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
+            # 记录缓存未命中统计
+            record_cache_miss(self.cache_manager._storage.cache_id, elapsed)
             return result
 
         def sync_inner():
@@ -673,6 +677,8 @@ class u_l_cache:
                 if cached is not None:
                     elapsed = time.perf_counter() - start_time
                     logger.info(f"Cache-hit: {cache_key} ({elapsed:.4f}s)")
+                    # 记录缓存命中统计
+                    record_cache_hit(self.cache_manager._storage.cache_id, elapsed)
                     return self._parse_cached_value(cached)
             result = func(*args, **kwargs)
             if cache_write and result is not None:
@@ -680,6 +686,8 @@ class u_l_cache:
                 self._set_to_cache_sync(cache_key, result, ttl_seconds)
             elapsed = time.perf_counter() - start_time
             logger.info(f"Cache-miss: {cache_key} ({elapsed:.4f}s)")
+            # 记录缓存未命中统计
+            record_cache_miss(self.cache_manager._storage.cache_id, elapsed)
             return result
 
         if is_async:

@@ -24,7 +24,7 @@ class UserInfo(BaseModel):
 
 @u_l_cache(
     serializer_type=SerializerType.PICKLE,
-    key_func=lambda *args: f"u_{args[0] // 10}" if args else "u_0"  # 10个一组
+    key_func=lambda *args: f"u_{args[0] % 4}" if args else "u_0"  # 10个一组
 )
 async def get_user_info(k: int) -> UserInfo:
     now = datetime.now()
@@ -38,9 +38,12 @@ async def main() -> None:
     logger.info(f"{u_1=}")
     u_cached = await get_user_info(-1)
     logger.info(f"{u_cached=}")
-    # 修复：asyncio.gather 需要传入协程对象列表
-    results = await asyncio.gather(*(get_user_info(_) for _ in range(64)))
-    print(len(results))
+
+    import random
+    for _ in range(64):
+        i = random.randint(1, 64)
+        await get_user_info(i)
+        
     stat_info = get_cache_statistics()
     logger.info(f"{stat_info=}")
 

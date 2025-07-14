@@ -23,8 +23,13 @@ class CacheStatistics:
     errors: int = 0
     total_requests: int = 0
     total_response_time: float = 0.0
-    min_response_time: float = float('inf')
-    max_response_time: float = 0.0
+    min_r_t: float = float('inf')
+    max_r_t: float = 0.0
+    # 新增命中/未命中耗时统计
+    hit_total_time: float = 0.0
+    hit_count: int = 0
+    miss_total_time: float = 0.0
+    miss_count: int = 0
     
     @property
     def hit_rate(self) -> float:
@@ -41,12 +46,26 @@ class CacheStatistics:
         return self.misses / self.total_requests
     
     @property
-    def avg_response_time(self) -> float:
+    def avg_r_t(self) -> float:
         """平均响应时间"""
         if self.total_requests == 0:
             return 0.0
         return self.total_response_time / self.total_requests
-    
+
+    @property
+    def avg_hit_time(self) -> float:
+        """命中缓存平均耗时"""
+        if self.hit_count == 0:
+            return 0.0
+        return self.hit_total_time / self.hit_count
+
+    @property
+    def avg_miss_time(self) -> float:
+        """未命中缓存平均耗时"""
+        if self.miss_count == 0:
+            return 0.0
+        return self.miss_total_time / self.miss_count
+
     def reset(self):
         """重置统计信息"""
         self.hits = 0
@@ -56,8 +75,12 @@ class CacheStatistics:
         self.errors = 0
         self.total_requests = 0
         self.total_response_time = 0.0
-        self.min_response_time = float('inf')
-        self.max_response_time = 0.0
+        self.min_r_t = float('inf')
+        self.max_r_t = 0.0
+        self.hit_total_time = 0.0
+        self.hit_count = 0
+        self.miss_total_time = 0.0
+        self.miss_count = 0
 
 
 class CacheStatisticsManager:
@@ -78,8 +101,11 @@ class CacheStatisticsManager:
             stats.hits += 1
             stats.total_requests += 1
             stats.total_response_time += response_time
-            stats.min_response_time = min(stats.min_response_time, response_time)
-            stats.max_response_time = max(stats.max_response_time, response_time)
+            stats.min_r_t = min(stats.min_r_t, response_time)
+            stats.max_r_t = max(stats.max_r_t, response_time)
+            # 新增命中耗时统计
+            stats.hit_total_time += response_time
+            stats.hit_count += 1
     
     def record_miss(self, cache_id: str, response_time: float = 0.0):
         """记录缓存未命中"""
@@ -91,8 +117,11 @@ class CacheStatisticsManager:
             stats.misses += 1
             stats.total_requests += 1
             stats.total_response_time += response_time
-            stats.min_response_time = min(stats.min_response_time, response_time)
-            stats.max_response_time = max(stats.max_response_time, response_time)
+            stats.min_r_t = min(stats.min_r_t, response_time)
+            stats.max_r_t = max(stats.max_r_t, response_time)
+            # 新增未命中耗时统计
+            stats.miss_total_time += response_time
+            stats.miss_count += 1
     
     def record_set(self, cache_id: str, response_time: float = 0.0):
         """记录缓存设置"""
@@ -103,8 +132,8 @@ class CacheStatisticsManager:
             stats = self._statistics[cache_id]
             stats.sets += 1
             stats.total_response_time += response_time
-            stats.min_response_time = min(stats.min_response_time, response_time)
-            stats.max_response_time = max(stats.max_response_time, response_time)
+            stats.min_r_t = min(stats.min_r_t, response_time)
+            stats.max_r_t = max(stats.max_r_t, response_time)
     
     def record_delete(self, cache_id: str, response_time: float = 0.0):
         """记录缓存删除"""
@@ -115,8 +144,8 @@ class CacheStatisticsManager:
             stats = self._statistics[cache_id]
             stats.deletes += 1
             stats.total_response_time += response_time
-            stats.min_response_time = min(stats.min_response_time, response_time)
-            stats.max_response_time = max(stats.max_response_time, response_time)
+            stats.min_r_t = min(stats.min_r_t, response_time)
+            stats.max_r_t = max(stats.max_r_t, response_time)
     
     def record_error(self, cache_id: str, error: Exception):
         """记录缓存错误"""
@@ -135,6 +164,12 @@ class CacheStatisticsManager:
                 if cache_id not in self._statistics:
                     return {}
                 stats = self._statistics[cache_id]
+                def _f6(val):
+                    # 保证小数点后6位，非数字类型直接返回，且不使用科学计数法
+                    if isinstance(val, float):
+                        return round(val, 9)
+                    return val
+
                 return {
                     "cache_id": cache_id,
                     "hits": stats.hits,
@@ -143,11 +178,14 @@ class CacheStatisticsManager:
                     "deletes": stats.deletes,
                     "errors": stats.errors,
                     "total_requests": stats.total_requests,
-                    "hit_rate": stats.hit_rate,
-                    "miss_rate": stats.miss_rate,
-                    "avg_response_time": stats.avg_response_time,
-                    "min_response_time": stats.min_response_time if stats.min_response_time != float('inf') else 0.0,
-                    "max_response_time": stats.max_response_time,
+                    "hit_rate": _f6(stats.hit_rate),
+                    "miss_rate": _f6(stats.miss_rate),
+                    "avg_r_t": _f6(stats.avg_r_t),
+                    "min_r_t": _f6(stats.min_r_t if stats.min_r_t != float('inf') else 0.0),
+                    "max_r_t": _f6(stats.max_r_t),
+                    # 新增命中/未命中平均耗时
+                    "avg_hit_time": _f6(stats.avg_hit_time),
+                    "avg_miss_time": _f6(stats.avg_miss_time),
                 }
             else:
                 return {
