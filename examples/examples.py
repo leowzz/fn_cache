@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from l_cache import (
     SerializerType,
-    u_l_cache,
+    cached,
     get_cache_statistics,
 )
 
@@ -22,7 +22,7 @@ class UserInfo(BaseModel):
     start: datetime
 
 
-@u_l_cache(
+@cached(
     serializer_type=SerializerType.PICKLE,
     key_func=lambda *args: f"u_{args[0] % 4}" if args else "u_0"  # 10个一组
 )

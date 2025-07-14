@@ -1,18 +1,18 @@
 """
-装饰器模式示例 - 展示新的 u_l_cache 装饰器使用方法
+装饰器模式示例 - 展示新的 cached 装饰器使用方法
 """
 
 import asyncio
 import time
 from typing import Dict, Any
 
-from l_cache.decorators import u_l_cache
+from l_cache.decorators import cached
 from l_cache.enums import CacheType, StorageType, CacheKeyEnum
 from l_cache.config import DEFAULT_PREFIX
 
 
 # 示例1: 基本使用
-@u_l_cache(
+@cached(
     cache_type=CacheType.TTL,
     storage_type=StorageType.MEMORY,
     ttl_seconds=60,
@@ -26,7 +26,7 @@ async def get_user_data(user_id: int) -> Dict[str, Any]:
 
 
 # 示例2: 使用缓存控制参数
-@u_l_cache(
+@cached(
     cache_type=CacheType.TTL,
     storage_type=StorageType.MEMORY,
     ttl_seconds=300,
@@ -45,7 +45,7 @@ class ProductCacheKeys(CacheKeyEnum):
     PRODUCT_PRICE = "product:price:{product_id}"
 
 
-@u_l_cache(
+@cached(
     cache_type=CacheType.TTL,
     storage_type=StorageType.MEMORY,
     ttl_seconds=600,
@@ -66,7 +66,7 @@ async def get_product_details(product_id: int) -> Dict[str, Any]:
 
 
 # 示例4: 异步写入控制
-@u_l_cache(
+@cached(
     cache_type=CacheType.TTL,
     storage_type=StorageType.MEMORY,
     ttl_seconds=120
@@ -84,7 +84,7 @@ async def get_analytics_data(date: str, wait_for_write: bool = True) -> Dict[str
 
 
 # 示例5: 同步函数缓存
-@u_l_cache(
+@cached(
     cache_type=CacheType.LRU,
     storage_type=StorageType.MEMORY,
     max_size=200

@@ -7,7 +7,7 @@ import pytest
 import asyncio
 import time
 from l_cache.decorators import (
-    u_l_cache, 
+    cached, 
     enable_global_cache, 
     disable_global_cache, 
     is_global_cache_enabled,
@@ -19,14 +19,14 @@ from l_cache.manager import UniversalCacheManager
 
 
 # 测试用的缓存函数
-@u_l_cache(ttl_seconds=60)
+@cached(ttl_seconds=60)
 def sync_add(x: int, y: int) -> int:
     """测试同步函数"""
     time.sleep(0.1)  # 模拟耗时操作
     return x + y
 
 
-@u_l_cache(ttl_seconds=60)
+@cached(ttl_seconds=60)
 async def async_mul(x: int, y: int) -> int:
     """测试异步函数"""
     await asyncio.sleep(0.1)  # 模拟耗时操作

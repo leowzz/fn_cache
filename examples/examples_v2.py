@@ -13,14 +13,14 @@ import time
 from typing import Dict, Any
 
 from l_cache import (
-    u_l_cache, u_l_cache, CacheKeyEnum, StorageType, CacheType, SerializerType,
+    cached, cached, CacheKeyEnum, StorageType, CacheType, SerializerType,
     UniversalCacheManager, CacheConfig, get_cache_statistics, reset_cache_statistics,
     start_cache_memory_monitoring, get_cache_memory_usage
 )
 
 
 # 示例1: 使用不同序列化器的缓存
-@u_l_cache(
+@cached(
     storage_type=StorageType.MEMORY,
     serializer_type=SerializerType.JSON,
     ttl_seconds=300
@@ -41,7 +41,7 @@ def get_user_profile_json(user_id: int) -> Dict[str, Any]:
     }
 
 
-@u_l_cache(
+@cached(
     storage_type=StorageType.MEMORY,
     serializer_type=SerializerType.PICKLE,
     ttl_seconds=300
@@ -70,7 +70,7 @@ class UserCacheKeyEnum(CacheKeyEnum):
     USER_PREFERENCES = "user:preferences:{user_id}"
 
 
-@u_l_cache(
+@cached(
     cache_key_enum=UserCacheKeyEnum.USER_VIP_INFO,
     key_params=["user_id"],
     storage_type=StorageType.REDIS,
@@ -90,7 +90,7 @@ async def get_user_vip_info(user_id: int) -> Dict[str, Any]:
     }
 
 
-@u_l_cache(
+@cached(
     cache_key_enum=UserCacheKeyEnum.USER_PERMISSIONS,
     key_params=["user_id", "tenant_id"],
     storage_type=StorageType.REDIS
@@ -216,7 +216,7 @@ async def demonstrate_batch_operations():
             yield (user_id,), {}
     
     # 使用预加载功能的缓存
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         preload_provider=user_ids_provider,
         ttl_seconds=300

@@ -21,7 +21,7 @@ L-Cache: 轻量级通用缓存库
 基本用法:
     
     # 使用通用装饰器
-    @u_l_cache(ttl_seconds=300)
+    @cached(ttl_seconds=300)
     def my_function(arg1, arg2):
         return expensive_computation(arg1, arg2)
     
@@ -29,7 +29,7 @@ L-Cache: 轻量级通用缓存库
     def custom_key_func(*args, **kwargs):
         return f"custom:{args[0]}:{kwargs.get('param2', 'default')}"
     
-    @u_l_cache(key_func=custom_key_func, ttl_seconds=300)
+    @cached(key_func=custom_key_func, ttl_seconds=300)
     async def get_user_info(user_id: int, param2="default"):
         return await fetch_user_info(user_id)
     
@@ -39,7 +39,7 @@ L-Cache: 轻量级通用缓存库
     value = await cache_manager.get("key")
     
     # 通过装饰后的函数访问缓存管理器
-    cached_func = u_l_cache(ttl_seconds=300)(my_function)
+    cached_func = cached(ttl_seconds=300)(my_function)
     cached_func.cache.clear()  # 清除该函数的缓存
     
     # 内存监控功能
@@ -54,7 +54,7 @@ L-Cache: 轻量级通用缓存库
 from .config import CacheConfig, enable_global_cache, disable_global_cache, is_global_cache_enabled
 from .decorators import (
     invalidate_all_caches,
-    u_l_cache,
+    cached,
     preload_all_caches,
     # 内存监控相关
     start_cache_memory_monitoring,
@@ -93,8 +93,7 @@ __all__ = [
     "SerializerType",
 
     # 装饰器
-    "u_l_cache",
-    "u_l_cache",
+    "cached",
 
     # 工具函数
     "invalidate_all_caches",

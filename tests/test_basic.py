@@ -12,7 +12,7 @@ from l_cache import (
     CacheConfig,
     CacheType,
     StorageType,
-    u_l_cache,
+    cached,
 
     CacheKeyEnum,
 )
@@ -114,11 +114,11 @@ class TestBasicFunctionality:
         value = await manager.get("test_key")
         assert value is None
     
-    def test_u_l_cache_decorator_sync(self):
-        """测试 u_l_cache 装饰器同步函数"""
+    def test_cached_decorator_sync(self):
+        """测试 cached 装饰器同步函数"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def test_function(param):
             nonlocal call_count
             call_count += 1
@@ -135,11 +135,11 @@ class TestBasicFunctionality:
         assert call_count == 1  # 调用次数不应该增加
     
     @pytest.mark.asyncio
-    async def test_u_l_cache_decorator_async(self):
-        """测试 u_l_cache 装饰器异步函数"""
+    async def test_cached_decorator_async(self):
+        """测试 cached 装饰器异步函数"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         async def test_async_function(param):
             nonlocal call_count
             call_count += 1

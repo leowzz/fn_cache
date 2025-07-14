@@ -14,7 +14,7 @@ from l_cache import (
     CacheConfig,
     StorageType,
     CacheType,
-    u_l_cache,
+    cached,
     start_cache_memory_monitoring,
     stop_cache_memory_monitoring,
     get_cache_memory_usage,
@@ -84,7 +84,7 @@ def example_decorator_auto_monitoring():
     print("=== 装饰器自动监控示例 ===")
     
     # 普通小对象缓存
-    @u_l_cache(storage_type=StorageType.MEMORY, ttl_seconds=600)
+    @cached(storage_type=StorageType.MEMORY, ttl_seconds=600)
     def expensive_calculation(x: int) -> dict:
         """模拟昂贵的计算"""
         time.sleep(0.01)  # 模拟计算时间
@@ -96,17 +96,17 @@ def example_decorator_auto_monitoring():
         }
     
     # 大对象1：大字符串（约50MB）
-    @u_l_cache(storage_type=StorageType.MEMORY, ttl_seconds=600)
+    @cached(storage_type=StorageType.MEMORY, ttl_seconds=600)
     def big_string_func():
         return "A" * (50 * 1024 * 1024)  # 50MB 字符串
 
     # 大对象2：大列表（约50MB）
-    @u_l_cache(storage_type=StorageType.MEMORY, ttl_seconds=600)
+    @cached(storage_type=StorageType.MEMORY, ttl_seconds=600)
     def big_list_func():
         return [123456] * (50 * 1024 * 1024 // 4)  # 50MB int列表（int约4字节）
 
     # 大对象3：大字典（约47MB）
-    @u_l_cache(storage_type=StorageType.MEMORY, ttl_seconds=600)
+    @cached(storage_type=StorageType.MEMORY, ttl_seconds=600)
     def big_dict_func():
         # 约47MB: 47*1024*1024/20 ≈ 2.46M项，每项key+value约20字节
         return {f"k{i}": i for i in range((47 * 1024 * 1024) // 20)}

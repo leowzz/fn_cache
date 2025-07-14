@@ -35,7 +35,7 @@ from l_cache import (
     CacheKeyEnum,
     
     # 装饰器
-    u_l_cache,
+    cached,
     invalidate_all_caches,
     
     # 内存监控
@@ -286,7 +286,7 @@ class ProductService:
         )
         register_cache_manager_for_monitoring(self.cache_manager)
     
-    @u_l_cache(ttl_seconds=600, storage_type=StorageType.MEMORY)
+    @cached(ttl_seconds=600, storage_type=StorageType.MEMORY)
     async def get_product_info(self, product_id: str) -> Dict[str, Any]:
         """获取商品信息 - 使用装饰器缓存"""
         print(f"🔄 从数据库查询商品信息: {product_id}")
@@ -306,7 +306,7 @@ class ProductService:
             }
         }
     
-    @u_l_cache(ttl_seconds=1200, storage_type=StorageType.MEMORY)
+    @cached(ttl_seconds=1200, storage_type=StorageType.MEMORY)
     async def get_products_by_category(self, category: str, page: int = 1, limit: int = 20) -> Dict[str, Any]:
         """获取分类商品列表 - 使用内存缓存"""
         print(f"🔄 从数据库查询分类商品: {category}, 页码: {page}")
@@ -338,7 +338,7 @@ class ProductService:
             }
         }
     
-    @u_l_cache(
+    @cached(
         ttl_seconds=1800,
         storage_type=StorageType.MEMORY,
         key_func=lambda *args, **kwargs: f"hot_products:{datetime.now().strftime('%Y%m%d')}"

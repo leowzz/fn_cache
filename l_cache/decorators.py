@@ -390,7 +390,7 @@ class _CacheRegistry:
 cache_registry = _CacheRegistry()
 
 
-class u_l_cache:
+class cached:
     """
     通用轻量缓存装饰器类(Universal Light Cache)，支持丰富的配置选项和缓存预加载。
     支持自定义缓存键生成器，参考 aiocache 的设计模式。

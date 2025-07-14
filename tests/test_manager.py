@@ -273,7 +273,7 @@ class TestUniversalCacheManager:
         assert await manager.get("key2") is None
 
     @pytest.mark.asyncio
-    async def test_version_controu_l_cache(self):
+    async def test_version_controcached(self):
         """测试用户版本控制"""
         manager = UniversalCacheManager()
         

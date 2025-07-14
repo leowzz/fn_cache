@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch, AsyncMock
 
 from l_cache import (
     UniversalCacheManager, CacheConfig, CacheType, StorageType,
-    u_l_cache, CacheKeyEnum, invalidate_all_caches,
+    cached, CacheKeyEnum, invalidate_all_caches,
     preload_all_caches
 )
 
@@ -105,11 +105,11 @@ class TestEndToEndCaching:
 class TestDecoratorIntegration:
     """装饰器集成测试类"""
 
-    def test_u_l_cache_integration(self):
-        """测试u_l_cache装饰器集成"""
+    def test_cached_integration(self):
+        """测试cached装饰器集成"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def expensive_operation(param1, param2="default"):
             nonlocal call_count
             call_count += 1
@@ -132,11 +132,11 @@ class TestDecoratorIntegration:
         assert call_count == 2
 
     @pytest.mark.asyncio
-    async def test_u_l_cache_async_integration(self):
-        """测试u_l_cache异步装饰器集成"""
+    async def test_cached_async_integration(self):
+        """测试cached异步装饰器集成"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         async def async_expensive_operation(param1, param2="default"):
             nonlocal call_count
             call_count += 1
@@ -161,7 +161,7 @@ class TestDecoratorIntegration:
         """测试装饰器与复杂数据"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def process_complex_data(data_type: str, filters: dict):
             nonlocal call_count
             call_count += 1
@@ -189,7 +189,7 @@ class TestDecoratorIntegration:
         """测试装饰器缓存失效"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def test_function(param):
             nonlocal call_count
             call_count += 1
@@ -239,7 +239,7 @@ class TestConcurrentOperations:
         """测试并发装饰器调用"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         async def async_function(param):
             nonlocal call_count
             call_count += 1
@@ -304,7 +304,7 @@ class TestErrorHandling:
         """测试装饰器错误处理"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def function_with_error(param):
             nonlocal call_count
             call_count += 1
@@ -327,7 +327,7 @@ class TestErrorHandling:
         """测试异步装饰器错误处理"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         async def async_function_with_error(param):
             nonlocal call_count
             call_count += 1
@@ -374,7 +374,7 @@ class TestPerformance:
         """测试装饰器性能"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def performance_test_function(param):
             nonlocal call_count
             call_count += 1
@@ -431,7 +431,7 @@ class TestRealWorldScenarios:
         """测试产品目录缓存场景"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=300)  # 5分钟缓存
+        @cached(ttl_seconds=300)  # 5分钟缓存
         def get_product_catalog(category: str, filters: dict):
             nonlocal call_count
             call_count += 1
@@ -461,7 +461,7 @@ class TestRealWorldScenarios:
         """测试API响应缓存场景"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         async def fetch_api_data(endpoint: str, params: dict):
             nonlocal call_count
             call_count += 1
@@ -487,7 +487,7 @@ class TestRealWorldScenarios:
         """测试配置缓存场景"""
         call_count = 0
         
-        @u_l_cache(ttl_seconds=3600)  # 1小时缓存
+        @cached(ttl_seconds=3600)  # 1小时缓存
         def get_system_config(config_key: str):
             nonlocal call_count
             call_count += 1

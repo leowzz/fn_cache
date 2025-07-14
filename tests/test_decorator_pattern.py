@@ -7,7 +7,7 @@ import asyncio
 import time
 from unittest.mock import patch, MagicMock
 
-from l_cache.decorators import u_l_cache
+from l_cache.decorators import cached
 from l_cache.enums import CacheType, StorageType, CacheKeyEnum
 from l_cache.config import DEFAULT_PREFIX
 
@@ -19,7 +19,7 @@ class TestDecoratorPattern:
         """测试基本异步装饰器"""
         call_count = 0
         
-        @u_l_cache(
+        @cached(
             cache_type=CacheType.TTL,
             storage_type=StorageType.MEMORY,
             ttl_seconds=60
@@ -46,7 +46,7 @@ class TestDecoratorPattern:
         """测试基本同步装饰器"""
         call_count = 0
         
-        @u_l_cache(
+        @cached(
             cache_type=CacheType.LRU,
             storage_type=StorageType.MEMORY,
             max_size=100
@@ -70,7 +70,7 @@ class TestDecoratorPattern:
         """测试缓存读取控制"""
         call_count = 0
         
-        @u_l_cache(
+        @cached(
             cache_type=CacheType.TTL,
             storage_type=StorageType.MEMORY,
             ttl_seconds=60
@@ -97,7 +97,7 @@ class TestDecoratorPattern:
         """测试缓存写入控制"""
         call_count = 0
         
-        @u_l_cache(
+        @cached(
             cache_type=CacheType.TTL,
             storage_type=StorageType.MEMORY,
             ttl_seconds=60
@@ -129,7 +129,7 @@ class TestDecoratorPattern:
         """测试异步写入控制"""
         call_count = 0
         
-        @u_l_cache(
+        @cached(
             cache_type=CacheType.TTL,
             storage_type=StorageType.MEMORY,
             ttl_seconds=60
@@ -162,7 +162,7 @@ class TestDecoratorPattern:
 
     def test_decorator_attributes(self):
         """测试装饰器属性"""
-        @u_l_cache(
+        @cached(
             cache_type=CacheType.TTL,
             storage_type=StorageType.MEMORY,
             ttl_seconds=60
@@ -181,7 +181,7 @@ class TestDecoratorPattern:
         def make_expire_sec(result: int) -> int:
             return result  # 根据结果动态设置过期时间
         
-        @u_l_cache(
+        @cached(
             cache_type=CacheType.TTL,
             storage_type=StorageType.MEMORY,
             ttl_seconds=60,

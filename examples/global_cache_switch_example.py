@@ -7,12 +7,12 @@
 
 import asyncio
 import time
-from l_cache.decorators import u_l_cache, enable_global_cache, disable_global_cache, is_global_cache_enabled
+from l_cache.decorators import cached, enable_global_cache, disable_global_cache, is_global_cache_enabled
 from l_cache.decorators import enable_all_registered_caches, disable_all_registered_caches, get_all_cache_status
 
 
 # 示例1：使用默认配置的缓存装饰器
-@u_l_cache(ttl_seconds=60)
+@cached(ttl_seconds=60)
 def expensive_calculation_sync(x: int, y: int) -> int:
     """模拟耗时的同步计算"""
     print(f"执行同步计算: {x} + {y}")
@@ -20,7 +20,7 @@ def expensive_calculation_sync(x: int, y: int) -> int:
     return x + y
 
 
-@u_l_cache(ttl_seconds=60)
+@cached(ttl_seconds=60)
 async def expensive_calculation_async(x: int, y: int) -> int:
     """模拟耗时的异步计算"""
     print(f"执行异步计算: {x} * {y}")
@@ -29,7 +29,7 @@ async def expensive_calculation_async(x: int, y: int) -> int:
 
 
 # 示例2：使用自定义配置的缓存装饰器
-@u_l_cache(
+@cached(
     cache_type="TTL",
     storage_type="MEMORY", 
     ttl_seconds=30,

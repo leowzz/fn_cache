@@ -20,7 +20,7 @@ from enum import Enum
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from l_cache import (
-    u_l_cache, StorageType, CacheType, SerializerType,
+    cached, StorageType, CacheType, SerializerType,
     UniversalCacheManager, CacheConfig, get_cache_statistics, reset_cache_statistics,
     start_cache_memory_monitoring, get_cache_memory_usage, preload_all_caches
 )
@@ -30,7 +30,7 @@ def test_serializers():
     """测试不同序列化器"""
     print("1. 测试不同序列化器:")
     
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         serializer_type=SerializerType.JSON,
         ttl_seconds=300
@@ -39,7 +39,7 @@ def test_serializers():
         print(f"JSON序列化: 获取用户 {user_id} 数据")
         return {"user_id": user_id, "name": f"用户_{user_id}", "type": "json"}
 
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         serializer_type=SerializerType.PICKLE,
         ttl_seconds=300
@@ -68,7 +68,7 @@ async def test_user_cache():
     def user_stats_key_func(user_id: int, tenant_id: str):
         return f"test:user:stats:{user_id}:{tenant_id}"
     
-    @u_l_cache(
+    @cached(
         key_func=user_info_key_func,
         storage_type=StorageType.MEMORY
     )
@@ -77,7 +77,7 @@ async def test_user_cache():
         await asyncio.sleep(0.1)
         return {"user_id": user_id, "vip": user_id % 2 == 0}
 
-    @u_l_cache(
+    @cached(
         key_func=user_stats_key_func,
         storage_type=StorageType.MEMORY
     )
@@ -128,7 +128,7 @@ async def test_statistics():
     # 重置统计
     reset_cache_statistics()
     
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         serializer_type=SerializerType.JSON,
         ttl_seconds=300
@@ -137,7 +137,7 @@ async def test_statistics():
         print(f"JSON序列化: 获取用户 {user_id} 数据")
         return {"user_id": user_id, "name": f"用户_{user_id}", "type": "json"}
 
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         serializer_type=SerializerType.PICKLE,
         ttl_seconds=300
@@ -152,7 +152,7 @@ async def test_statistics():
     def user_stats_key_func(user_id: int, tenant_id: str):
         return f"test:user:stats:{user_id}:{tenant_id}"
     
-    @u_l_cache(
+    @cached(
         key_func=user_info_key_func,
         storage_type=StorageType.MEMORY
     )
@@ -161,7 +161,7 @@ async def test_statistics():
         await asyncio.sleep(0.1)
         return {"user_id": user_id, "vip": user_id % 2 == 0}
 
-    @u_l_cache(
+    @cached(
         key_func=user_stats_key_func,
         storage_type=StorageType.MEMORY
     )
@@ -195,7 +195,7 @@ async def test_memory_monitoring():
     # 启动内存监控
     start_cache_memory_monitoring(interval_seconds=5)
     
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         serializer_type=SerializerType.JSON,
         ttl_seconds=300
@@ -204,7 +204,7 @@ async def test_memory_monitoring():
         print(f"JSON序列化: 获取用户 {user_id} 数据")
         return {"user_id": user_id, "name": f"用户_{user_id}", "type": "json"}
 
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         serializer_type=SerializerType.PICKLE,
         ttl_seconds=300
@@ -241,7 +241,7 @@ async def test_preload():
         for user_id in range(1, 4):
             yield (user_id,), {}
     
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         preload_provider=user_ids_provider,
         ttl_seconds=300
@@ -270,7 +270,7 @@ async def test_dynamic_ttl():
             return 3600  # VIP用户缓存1小时
         return 300  # 普通用户缓存5分钟
     
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         make_expire_sec_func=make_expire_sec_func,
         ttl_seconds=300  # 默认TTL
@@ -296,7 +296,7 @@ async def test_cache_control():
     
     call_count = 0
     
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         ttl_seconds=300
     )
@@ -331,7 +331,7 @@ async def test_cache_control():
 async def test_cache_cleanup():
     print("\n=== 测试缓存清理 ===")
     
-    @u_l_cache(
+    @cached(
         storage_type=StorageType.MEMORY,
         ttl_seconds=300
     )

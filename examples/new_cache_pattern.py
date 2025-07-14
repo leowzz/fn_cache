@@ -13,14 +13,14 @@ import time
 import sys
 import os
 
-from l_cache import u_l_cache
+from l_cache import cached
 
 
 def example_basic_usage():
     """基本使用示例"""
     print("=== 基本使用示例 ===")
     
-    @u_l_cache(ttl_seconds=60)
+    @cached(ttl_seconds=60)
     def get_user_info(user_id: int):
         print(f"从数据库获取用户 {user_id} 的信息")
         return {"user_id": user_id, "name": f"User{user_id}", "email": f"user{user_id}@example.com"}
@@ -58,7 +58,7 @@ def example_custom_key_func():
         environment = "prod"  # 可以从环境变量获取
         return f"user:{environment}:{user_id}"
     
-    @u_l_cache(key_func=custom_key_func, ttl_seconds=300)
+    @cached(key_func=custom_key_func, ttl_seconds=300)
     def get_user_profile(user_id: int, include_sensitive: bool = False):
         print(f"获取用户 {user_id} 的详细资料")
         return {
@@ -86,7 +86,7 @@ async def example_async_usage():
     """异步使用示例"""
     print("=== 异步使用示例 ===")
     
-    @u_l_cache(ttl_seconds=60)
+    @cached(ttl_seconds=60)
     async def fetch_api_data(endpoint: str, params: dict):
         print(f"从API获取数据: {endpoint}")
         await asyncio.sleep(0.1)  # 模拟网络请求
@@ -132,7 +132,7 @@ def example_dynamic_ttl():
         else:
             return 300   # 普通用户缓存5分钟
     
-    @u_l_cache(make_expire_sec_func=make_expire_sec_func, ttl_seconds=300)
+    @cached(make_expire_sec_func=make_expire_sec_func, ttl_seconds=300)
     def get_user_type(user_id: int):
         print(f"获取用户 {user_id} 的类型")
         # 模拟根据用户ID获取用户类型

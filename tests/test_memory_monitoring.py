@@ -19,7 +19,7 @@ from l_cache import (
     register_cache_manager_for_monitoring,
     unregister_cache_manager_from_monitoring,
     MemoryUsageInfo,
-    u_l_cache,
+    cached,
 )
 from l_cache.decorators import cache_registry
 
@@ -122,7 +122,7 @@ class TestMemoryMonitoring:
 
     def test_decorator_auto_registration(self):
         """测试装饰器自动注册缓存管理器"""
-        @u_l_cache(storage_type=StorageType.MEMORY, ttl_seconds=300)
+        @cached(storage_type=StorageType.MEMORY, ttl_seconds=300)
         def test_function(x):
             return x * 2
         

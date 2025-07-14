@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch, AsyncMock
 import pytest
 
 from l_cache import (
-    u_l_cache, CacheKeyEnum, CacheType, StorageType,
+    cached, CacheKeyEnum, CacheType, StorageType,
     invalidate_all_caches, preload_all_caches
 )
 from l_cache.decorators import _CacheRegistry
@@ -32,7 +32,7 @@ class TestULCacheDecorator:
 
     def test_init_with_default_params(self):
         """测试使用默认参数初始化"""
-        decorator = u_l_cache()
+        decorator = cached()
         assert decorator.config.cache_type == CacheType.TTL
         assert decorator.config.storage_type == StorageType.MEMORY
         assert decorator.config.ttl_seconds == 600
@@ -49,7 +49,7 @@ class TestULCacheDecorator:
         def preload_provider():
             return [((1,), {}), ((2,), {})]
 
-        decorator = u_l_cache(
+        decorator = cached(
             cache_type=CacheType.LRU,
             storage_type=StorageType.MEMORY,
             ttl_seconds=300,
@@ -71,7 +71,7 @@ class TestULCacheDecorator:
         """测试同步函数缓存"""
         call_count = 0
 
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def test_function(param1, param2="default"):
             nonlocal call_count
             call_count += 1
@@ -101,7 +101,7 @@ class TestULCacheDecorator:
         def custom_key_func(*args, **kwargs):
             return f"custom_key_{args[0]}_{kwargs.get('param2', 'default')}"
 
-        @u_l_cache(key_func=custom_key_func)
+        @cached(key_func=custom_key_func)
         def test_function(param1, param2="default"):
             nonlocal call_count
             call_count += 1
@@ -122,7 +122,7 @@ class TestULCacheDecorator:
         """测试异步函数缓存"""
         call_count = 0
 
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         async def test_async_function(param1, param2="default"):
             nonlocal call_count
             call_count += 1
@@ -144,7 +144,7 @@ class TestULCacheDecorator:
         """测试异步函数复杂参数"""
         call_count = 0
 
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         async def test_async_function(param1, param2, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -165,7 +165,7 @@ class TestULCacheDecorator:
         """测试None结果缓存"""
         call_count = 0
 
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def test_function(param):
             nonlocal call_count
             call_count += 1
@@ -184,7 +184,7 @@ class TestULCacheDecorator:
     def test_cache_key_generation(self):
         """测试缓存键生成"""
 
-        @u_l_cache()
+        @cached()
         def test_function(param1, param2="default"):
             return f"result_{param1}_{param2}"
 
@@ -198,7 +198,7 @@ class TestULCacheDecorator:
         """测试并发调用"""
         call_count = 0
 
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def test_function(param):
             nonlocal call_count
             call_count += 1
@@ -225,7 +225,7 @@ class TestULCacheDecorator:
         """测试同步函数缓存清除功能"""
         call_count = 0
 
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         def test_function(param):
             nonlocal call_count
             call_count += 1
@@ -254,7 +254,7 @@ class TestULCacheDecorator:
         """测试异步函数缓存清除功能"""
         call_count = 0
 
-        @u_l_cache(ttl_seconds=60)
+        @cached(ttl_seconds=60)
         async def test_async_function(param):
             nonlocal call_count
             call_count += 1
