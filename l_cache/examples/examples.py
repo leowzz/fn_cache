@@ -8,8 +8,7 @@ import asyncio
 import time
 from typing import Dict, List, Any
 
-from . import (
-    u_l_cache,
+from .. import (
     u_l_cache,
     CacheKeyEnum,
     CacheType,
