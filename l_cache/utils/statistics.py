@@ -167,7 +167,7 @@ class CacheStatisticsManager:
                 def _f6(val):
                     # 保证小数点后6位，非数字类型直接返回，且不使用科学计数法
                     if isinstance(val, float):
-                        return round(val, 9)
+                        return round(val, 6)
                     return val
 
                 return {
