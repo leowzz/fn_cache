@@ -586,7 +586,7 @@ class TestGlobalFunctions:
     @pytest.mark.asyncio
     async def test_preload_all_caches(self):
         """测试预加载所有缓存"""
-        with patch('l_cache.decorators.default_cache_registry') as mock_registry:
+        with patch('l_cache.decorators.cache_registry') as mock_registry:
             mock_registry.preload_all = AsyncMock()
             await preload_all_caches()
             mock_registry.preload_all.assert_called_once()

@@ -13,6 +13,8 @@ L-Cache: 轻量级通用缓存库
 - 支持自定义缓存key生成策略
 - 支持用户级别版本控制和缓存失效
 - 支持缓存键枚举和动态过期时间
+- 支持缓存预加载功能
+- 支持内存占用监控和定期报告
 
 基本用法:
     
@@ -33,6 +35,11 @@ L-Cache: 轻量级通用缓存库
     cache_manager = UniversalCacheManager()
     await cache_manager.set("key", "value", ttl_seconds=300)
     value = await cache_manager.get("key")
+    
+    # 内存监控功能
+    start_cache_memory_monitoring(interval_seconds=300)  # 每5分钟监控一次
+    memory_usage = get_cache_memory_usage()  # 获取内存使用情况
+    summary = get_cache_memory_summary()  # 获取内存使用摘要
 """
 
 from .config import CacheConfig
@@ -43,6 +50,14 @@ from .decorators import (
     preload_all_caches,
     u_l_cache,
     invalidate_user_key_cache,
+    # 内存监控相关
+    start_cache_memory_monitoring,
+    stop_cache_memory_monitoring,
+    get_cache_memory_usage,
+    get_cache_memory_summary,
+    register_cache_manager_for_monitoring,
+    unregister_cache_manager_from_monitoring,
+    MemoryUsageInfo,
 )
 from .enums import CacheKeyEnum, CacheType, StorageType
 from .manager import UniversalCacheManager
@@ -75,6 +90,15 @@ __all__ = [
     # redis操作工具
     "safe_redis_operation",
     "safe_redis_void_operation",
+    
+    # 内存监控相关
+    "start_cache_memory_monitoring",
+    "stop_cache_memory_monitoring",
+    "get_cache_memory_usage",
+    "get_cache_memory_summary",
+    "register_cache_manager_for_monitoring",
+    "unregister_cache_manager_from_monitoring",
+    "MemoryUsageInfo",
 ]
 
 __version__ = "1.0.0"
