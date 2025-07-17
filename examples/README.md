@@ -57,7 +57,7 @@ python examples/simple_comprehensive_example.py
 
 ### 3. 装饰器模式
 ```python
-@u_l_cache(ttl_seconds=600, storage_type=StorageType.MEMORY)
+@cached(ttl_seconds=600, storage_type=StorageType.MEMORY)
 async def get_product_info(self, product_id: str) -> Dict[str, Any]:
     # 函数逻辑
     pass
@@ -65,7 +65,7 @@ async def get_product_info(self, product_id: str) -> Dict[str, Any]:
 
 ### 4. 自定义缓存键生成
 ```python
-@u_l_cache(
+@cached(
     ttl_seconds=1800,
     key_func=lambda *args, **kwargs: f"hot_products:{datetime.now().strftime('%Y%m%d')}"
 )

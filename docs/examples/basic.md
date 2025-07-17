@@ -594,11 +594,14 @@ if __name__ == "__main__":
 有些场景下，函数参数中包含如数据库会话（如SQLAlchemy的AsyncSession）等不可序列化或无需参与缓存key的对象。可以通过`identify_exclude_types`结合`@cached`的`key_func`参数实现：
 
 ```python
+from functools import partial
 from fn_cache import cached
 from fn_cache.utils import identify_exclude_types
 from sqlalchemy.ext.asyncio import AsyncSession
 
-@cached(key_func=lambda *args, **kwargs: identify_exclude_types(*args, exclude_types=(AsyncSession,), **kwargs))
+key_func = partial(identify_exclude_types, exclude_types=(AsyncSession,))
+
+@cached(key_func=key_func)
 async def get_user_by_id(user_id: int, db: AsyncSession):
     # db为SQLAlchemy异步会话，不参与缓存key
     result = await db.execute(...)

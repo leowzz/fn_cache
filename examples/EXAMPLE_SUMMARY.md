@@ -103,12 +103,12 @@ msgpack_cache = UniversalCacheManager(
 ### 4. 装饰器模式展示
 ```python
 # 基础装饰器使用
-@u_l_cache(ttl_seconds=600, storage_type=StorageType.MEMORY)
+@cached(ttl_seconds=600, storage_type=StorageType.MEMORY)
 async def get_product_info(self, product_id: str) -> Dict[str, Any]:
     pass
 
 # 自定义缓存键生成
-@u_l_cache(
+@cached(
     ttl_seconds=1800,
     key_func=lambda *args, **kwargs: f"hot_products:{datetime.now().strftime('%Y%m%d')}"
 )
