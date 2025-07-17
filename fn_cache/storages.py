@@ -226,21 +226,17 @@ class RedisCacheStorage(CacheStorage):
 
     def __init__(self, config: CacheConfig):
         super().__init__(config)
-        self._redis = None
         self._prefix = config.prefix
+        # 不再在此处初始化redis
 
     async def _get_redis(self):
-        """获取Redis连接"""
-        if self._redis is None:
-            try:
-                import redis.asyncio as redis
-                self._redis = redis.Redis(**self.config.redis_config)
-            except ImportError:
-                raise ImportError("Redis is required for RedisCacheStorage. Install with: pip install redis")
-            except Exception as e:
-                logger.error(f"Failed to connect to Redis: {e}")
-                raise
-        return self._redis
+        """
+        获取Redis连接（全局变量redis_cli）
+        """
+        global redis_cli
+        if redis_cli is None:
+            raise RuntimeError("全局redis_cli未设置，请先调用set_redis_client进行配置")
+        return redis_cli
 
     async def get(self, key: str) -> Optional[Any]:
         """异步获取缓存值"""

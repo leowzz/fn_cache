@@ -39,7 +39,6 @@ class CacheConfig(BaseModel):
     :param serializer_kwargs: 序列化器参数
     :param enable_statistics: 是否启用缓存统计
     :param enable_memory_monitoring: 是否启用内存监控
-    :param redis_config: Redis连接配置
     """
     cache_type: CacheType = CacheType.TTL
     storage_type: StorageType = StorageType.MEMORY
@@ -53,13 +52,3 @@ class CacheConfig(BaseModel):
     serializer_kwargs: dict = {}
     enable_statistics: bool = True
     enable_memory_monitoring: bool = True
-    redis_config: dict = {
-        "host": "localhost",
-        "port": 6379,
-        "db": 0,
-        "decode_responses": True,
-        "socket_timeout": 1.0,
-        "socket_connect_timeout": 1.0,
-        "retry_on_timeout": True,
-        "health_check_interval": 30,
-    }

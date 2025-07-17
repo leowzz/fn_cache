@@ -1,10 +1,10 @@
-# fn_cache: 轻量级通用缓存库
+# fn_cache: 轻量级函数缓存工具
 
 `fn_cache` 是一个专为现代 Python 应用设计的轻量级缓存库，提供统一的接口、多种缓存策略和存储后端。无论您需要简单的内存缓存还是分布式 Redis 缓存，`fn_cache` 都能轻松应对。
 
 ## ✨ 核心特性
 
-- **多种缓存策略**: 支持 TTL (Time-To-Live) 和 LRU (Least Recently Used) 缓存淘汰策略
+- **多种缓存策略**: 支持 TTL (Time-To-Live) 和 LRU (Least Recently Used) 缓存淘汰策略. 支持异步函数的 LRU 缓存（async lru_cache），让异步场景下也能高效利用 LRU 策略
 - **灵活的存储后端**: 内置内存和 Redis 两种存储后端，可根据需求轻松切换
 - **多种序列化格式**: 支持 JSON、Pickle、MessagePack 和字符串序列化
 - **版本控制机制**: 通过全局版本号实现一键失效所有缓存，便于调试和管理

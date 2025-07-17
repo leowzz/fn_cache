@@ -70,6 +70,15 @@ from fn_cache import (
     is_global_cache_enabled,
 )
 
+# 1. 配置全局Redis客户端
+import redis.asyncio as aioredis
+from fn_cache import set_redis_client
+
+redis_cli = aioredis.Redis(host="localhost", port=6379, db=0)
+set_redis_client(redis_cli)
+
+# 2. 其余缓存用法保持不变
+
 
 # ============================================================================
 # 数据模型定义
@@ -166,12 +175,7 @@ class UserService:
                 storage_type=StorageType.REDIS,
                 serializer_type=SerializerType.PICKLE,
                 ttl_seconds=1800,  # 30分钟
-                redis_config={
-                    "host": "localhost",
-                    "port": 6379,
-                    "db": 1,  # 使用不同的数据库
-                    "decode_responses": False,  # Pickle需要二进制模式
-                }
+                # redis_config参数已移除
             )
         )
         
@@ -181,12 +185,7 @@ class UserService:
                 storage_type=StorageType.REDIS,
                 serializer_type=SerializerType.MESSAGEPACK,
                 ttl_seconds=3600,  # 1小时
-                redis_config={
-                    "host": "localhost",
-                    "port": 6379,
-                    "db": 2,
-                    "decode_responses": False,
-                }
+                # redis_config参数已移除
             )
         )
         

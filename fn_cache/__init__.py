@@ -75,6 +75,18 @@ from .storages import CacheStorage, MemoryCacheStorage, RedisCacheStorage
 from .utils import safe_redis_operation, safe_redis_void_operation
 from .utils.serializers import Serializer, JsonSerializer, PickleSerializer, MessagePackSerializer
 
+redis_cli = None
+
+
+def set_redis_client(client):
+    """
+    设置全局Redis异步客户端
+    :param client: aioredis.Redis 实例
+    """
+    global redis_cli
+    redis_cli = client
+
+
 __all__ = [
     # 管理器和存储
     "UniversalCacheManager",
@@ -102,7 +114,7 @@ __all__ = [
     # redis操作工具
     "safe_redis_operation",
     "safe_redis_void_operation",
-    
+
     # 内存监控相关
     "start_cache_memory_monitoring",
     "stop_cache_memory_monitoring",
@@ -111,12 +123,12 @@ __all__ = [
     "register_cache_manager_for_monitoring",
     "unregister_cache_manager_from_monitoring",
     "MemoryUsageInfo",
-    
+
     # 缓存统计相关
     "get_cache_statistics",
     "reset_cache_statistics",
     "CacheStatistics",
-    
+
     # 序列化器
     "Serializer",
     "JsonSerializer",

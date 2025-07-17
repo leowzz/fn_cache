@@ -18,6 +18,14 @@ from fn_cache import (
     start_cache_memory_monitoring, get_cache_memory_usage
 )
 
+# 1. 配置全局Redis客户端
+import redis.asyncio as aioredis
+from fn_cache import set_redis_client
+
+redis_cli = aioredis.Redis(host="localhost", port=6379, db=0)
+set_redis_client(redis_cli)
+
+# 2. 其余缓存用法保持不变
 
 # 示例1: 使用不同序列化器的缓存
 @cached(
@@ -122,22 +130,12 @@ async def demonstrate_cache_manager():
         ttl_seconds=300,
         enable_statistics=True
     )
-    
     redis_config = CacheConfig(
         storage_type=StorageType.REDIS,
         serializer_type=SerializerType.MESSAGEPACK,
         ttl_seconds=600,
-        enable_statistics=True,
-        redis_config={
-            "host": "localhost",
-            "port": 6379,
-            "db": 0,
-            "decode_responses": True,
-            "socket_timeout": 1.0,
-            "socket_connect_timeout": 1.0,
-        }
+        enable_statistics=True
     )
-    
     memory_manager = UniversalCacheManager(memory_config)
     redis_manager = UniversalCacheManager(redis_config)
     
