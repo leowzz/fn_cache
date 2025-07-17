@@ -17,11 +17,11 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'fn_cache'
-copyright = '2024, WangZhanze'
-author = 'WangZhanze <leolswq@163.com>'
+copyright = '2025, LeoWang'
+author = 'LeoWang <leolswq@163.com>'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.2'
+release = '0.1.5'
 
 # -- General configuration ---------------------------------------------------
 
@@ -123,14 +123,14 @@ latex_elements = {
 
 man_pages = [
     ('index', 'fn_cache', 'fn_cache Documentation',
-     ['WangZhanze'], 1)
+     ['LeoWang'], 1)
 ]
 
 # -- Options for Texinfo output ----------------------------------------------
 
 texinfo_documents = [
     ('index', 'fn_cache', 'fn_cache Documentation',
-     'WangZhanze', 'fn_cache', '轻量级通用缓存库',
+     'LeoWang', 'fn_cache', '轻量级通用缓存库',
      'Miscellaneous'),
 ]
 

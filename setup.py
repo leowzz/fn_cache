@@ -25,7 +25,7 @@ def get_version():
 setup(
     name="fn_cache",
     version=get_version(),
-    author="WangZhanze",
+    author="LeoWang",
     author_email="leolswq@163.com",
     description="轻量级通用缓存库",
     long_description=read_readme(),

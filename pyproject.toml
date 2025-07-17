@@ -9,10 +9,10 @@ description = "轻量级通用缓存库"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "WangZhanze", email = "leolswq@163.com"}
+    {name = "LeoWang", email = "leolswq@163.com"}
 ]
 maintainers = [
-    {name = "WangZhanze", email = "leolswq@163.com"}
+    {name = "LeoWang", email = "leolswq@163.com"}
 ]
 keywords = ["cache", "memory", "ttl", "lru", "async", "decorator"]
 classifiers = [
