@@ -136,6 +136,6 @@ __all__ = [
     "MessagePackSerializer",
 ]
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 __author__ = "LeoWang <leolswq@163.com>"
 __description__ = "轻量级通用缓存库"
