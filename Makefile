@@ -101,7 +101,7 @@ docs:
 		fi; \
 	fi
 
-docs-serve:
+docs-serve: 
 	@echo "启动文档服务器..."
 	@if [ -d "docs/_build/html" ]; then \
 		echo "使用 Sphinx 构建的文档..."; \

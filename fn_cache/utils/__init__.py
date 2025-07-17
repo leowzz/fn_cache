@@ -57,3 +57,17 @@ def _json_default(obj):
     if hasattr(obj, "__dict__"):
         return obj.__dict__
     return str(obj)
+
+
+def identify_exclude_types(*args, exclude_types: tuple[type] = (), **kwargs) -> str:
+    """
+    排除掉指定类型的参数，处理args和kwargs，最终通过hash(strify(...))返回
+
+    :param args: 位置参数
+    :param exclude_types: 需要排除的类型元组，例如 (AsyncSession,)
+    :param kwargs: 关键字参数
+    :return: str，hash值字符串
+    """
+    filtered_args = tuple(arg for arg in args if not isinstance(arg, exclude_types))
+    filtered_kwargs = {k: v for k, v in kwargs.items() if not isinstance(v, exclude_types)}
+    return f":{hash(strify((filtered_args, filtered_kwargs)))}"

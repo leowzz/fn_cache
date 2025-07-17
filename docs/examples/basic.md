@@ -588,3 +588,21 @@ if __name__ == "__main__":
 3. **查看API文档**：
    - [装饰器API](../api/decorators.md) - 完整API参考
    - [管理器API](../api/manager.md) - 管理器API 
+
+## 🧩 排除特定类型参数的缓存键生成
+
+有些场景下，函数参数中包含如数据库会话（如SQLAlchemy的AsyncSession）等不可序列化或无需参与缓存key的对象。可以通过`identify_exclude_types`结合`@cached`的`key_func`参数实现：
+
+```python
+from fn_cache import cached
+from fn_cache.utils import identify_exclude_types
+from sqlalchemy.ext.asyncio import AsyncSession
+
+@cached(key_func=lambda *args, **kwargs: identify_exclude_types(*args, exclude_types=(AsyncSession,), **kwargs))
+async def get_user_by_id(user_id: int, db: AsyncSession):
+    # db为SQLAlchemy异步会话，不参与缓存key
+    result = await db.execute(...)
+    return result.scalar()
+```
+
+这样，`db`参数不会影响缓存key，避免因会话对象不同导致缓存失效。 
