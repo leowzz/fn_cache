@@ -1,4 +1,4 @@
 typing-extensions>=4.0.0;python_version<'3.9'
-pydantic~=2.10.6
+pydantic>2.4,<3.0
 fastapi>0.100.0,<0.116.0
 loguru~=0.7.3
