@@ -86,7 +86,7 @@ async def get_user_vip_info(user_id: int) -> Dict[str, Any]:
         "user_id": user_id,
         "is_vip": is_vip,
         "vip_level": "gold" if is_vip else "none",
-        "expire_date": "2024-12-31" if is_vip else None
+        "expire_date": "2025-12-31" if is_vip else None
     }
 
 

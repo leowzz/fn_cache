@@ -61,7 +61,7 @@ async def fetch_user_data(user_id: int):
     return {
         "user_id": user_id,
         "profile": f"用户_{user_id} 的详细资料",
-        "last_login": "2024-01-01 10:00:00"
+        "last_login": "2025-01-01 10:00:00"
     }
 
 async def main():
@@ -122,7 +122,7 @@ def get_shared_data(data_id: str):
     return {
         "id": data_id,
         "content": f"共享内容_{data_id}",
-        "timestamp": "2024-01-01 12:00:00"
+        "timestamp": "2025-01-01 12:00:00"
     }
 ```
 

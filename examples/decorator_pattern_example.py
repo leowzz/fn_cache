@@ -125,10 +125,10 @@ async def main():
     
     # 示例4: 异步写入控制
     print("4. 异步写入控制示例:")
-    result4 = await get_analytics_data("2024-01-01")
+    result4 = await get_analytics_data("2025-01-01")
     print(f"结果: {result4}")
     # 不等待写入完成
-    result4_async = await get_analytics_data("2024-01-02", wait_for_write=False)
+    result4_async = await get_analytics_data("2025-01-02", wait_for_write=False)
     print(f"异步写入结果: {result4_async}\n")
     
     # 示例5: 同步函数缓存

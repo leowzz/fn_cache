@@ -53,7 +53,7 @@ async def fetch_user_data(user_id: int):
     return {
         "user_id": user_id,
         "profile": f"用户_{user_id} 的详细资料",
-        "last_login": "2024-01-01 10:00:00"
+        "last_login": "2025-01-01 10:00:00"
     }
 
 async def main():
@@ -158,7 +158,7 @@ def get_redis_cached_data(key: str):
     return {
         "key": key,
         "value": f"Redis缓存数据_{key}",
-        "timestamp": "2024-01-01 12:00:00"
+        "timestamp": "2025-01-01 12:00:00"
     }
 
 # 使用Redis缓存
@@ -293,7 +293,7 @@ def get_efficient_data(key: str):
     return {
         "key": key,
         "data": [i for i in range(1000)],  # 大数据量
-        "metadata": {"created": "2024-01-01", "version": "1.0"}
+        "metadata": {"created": "2025-01-01", "version": "1.0"}
     }
 
 result = get_efficient_data("large_data")

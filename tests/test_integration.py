@@ -470,7 +470,7 @@ class TestRealWorldScenarios:
                 "endpoint": endpoint,
                 "params": params,
                 "data": [{"id": 1, "name": "Item 1"}, {"id": 2, "name": "Item 2"}],
-                "timestamp": "2024-01-01T00:00:00Z"
+                "timestamp": "2025-01-01T00:00:00Z"
             }
         
         # 模拟多次相同API调用
